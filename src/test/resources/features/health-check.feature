@@ -18,5 +18,5 @@ Feature: Health Check and Infrastructure Connectivity
 
   Scenario: Kafka message queue is accessible
     Given 애플리케이션이 실행중이다
-    When Kafka 브로커에 연결을 시도한다
-    Then Kafka 연결이 성공한다
+    When Kafka 연결을 테스트한다
+    Then Kafka가 정상 동작한다
