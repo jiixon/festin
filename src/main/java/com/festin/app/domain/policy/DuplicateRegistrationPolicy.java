@@ -1,6 +1,7 @@
 package com.festin.app.domain.policy;
 
 import com.festin.app.domain.exception.AlreadyRegisteredException;
+import org.springframework.stereotype.Component;
 
 /**
  * 중복 등록 방지 정책
@@ -9,6 +10,7 @@ import com.festin.app.domain.exception.AlreadyRegisteredException;
  * - 같은 부스에 중복 등록 불가
  * - 이미 대기 중인 부스에 재등록 시도 시 예외 발생
  */
+@Component
 public class DuplicateRegistrationPolicy {
 
     /**

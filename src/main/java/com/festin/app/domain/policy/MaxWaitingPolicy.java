@@ -1,6 +1,7 @@
 package com.festin.app.domain.policy;
 
 import com.festin.app.domain.exception.MaxWaitingExceededException;
+import org.springframework.stereotype.Component;
 
 /**
  * 최대 대기 정책
@@ -9,6 +10,7 @@ import com.festin.app.domain.exception.MaxWaitingExceededException;
  * - 사용자는 최대 2개 부스까지만 동시 대기 가능
  * - 공정한 기회 제공 및 독점 방지
  */
+@Component
 public class MaxWaitingPolicy {
 
     private static final int MAX_ACTIVE_BOOTHS = 2;
