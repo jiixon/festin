@@ -40,4 +40,13 @@ public class BoothEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private BoothStatus status = BoothStatus.CLOSED;
+
+    public BoothEntity(UniversityEntity university, String name, String description,
+                       Integer capacity, BoothStatus status) {
+        this.university = university;
+        this.name = name;
+        this.description = description;
+        this.capacity = capacity;
+        this.status = status;
+    }
 }

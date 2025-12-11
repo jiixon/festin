@@ -26,4 +26,10 @@ public class UserEntity extends BaseTimeEntity {
 
     @Column(name = "notification_enabled", nullable = false)
     private Boolean notificationEnabled = true;
+
+    public UserEntity(String email, String nickname, String fcmToken) {
+        this.email = email;
+        this.nickname = nickname;
+        this.fcmToken = fcmToken;
+    }
 }

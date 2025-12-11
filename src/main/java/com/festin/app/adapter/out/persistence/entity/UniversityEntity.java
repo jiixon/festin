@@ -20,4 +20,9 @@ public class UniversityEntity extends BaseTimeEntity {
 
     @Column(nullable = false, unique = true, length = 100)
     private String domain;
+
+    public UniversityEntity(String name, String domain) {
+        this.name = name;
+        this.domain = domain;
+    }
 }
