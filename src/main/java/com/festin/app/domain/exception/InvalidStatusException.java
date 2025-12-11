@@ -9,7 +9,23 @@ package com.festin.app.domain.exception;
  */
 public class InvalidStatusException extends RuntimeException {
 
-    public InvalidStatusException(String message) {
+    private InvalidStatusException(String message) {
         super(message);
+    }
+
+    /**
+     * 호출된 상태가 아닐 때
+     * enter(), markAsNoShow(), cancel() 실행 시 발생
+     */
+    public static InvalidStatusException notCalled() {
+        return new InvalidStatusException("호출된 상태가 아닙니다.");
+    }
+
+    /**
+     * 입장 확인된 상태가 아닐 때
+     * complete() 실행 시 발생
+     */
+    public static InvalidStatusException notEntered() {
+        return new InvalidStatusException("입장 확인된 상태가 아닙니다.");
     }
 }

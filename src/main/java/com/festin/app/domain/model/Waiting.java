@@ -59,7 +59,7 @@ public class Waiting {
      */
     public void enter() {
         if (this.status != WaitingStatus.CALLED) {
-            throw new InvalidStatusException("호출된 상태가 아닙니다.");
+            throw InvalidStatusException.notCalled();
         }
         this.status = WaitingStatus.ENTERED;
         this.enteredAt = LocalDateTime.now();
@@ -75,7 +75,7 @@ public class Waiting {
      */
     public void complete() {
         if (this.status != WaitingStatus.ENTERED) {
-            throw new InvalidStatusException("입장 확인된 상태가 아닙니다.");
+            throw InvalidStatusException.notEntered();
         }
         this.status = WaitingStatus.COMPLETED;
         this.completionType = CompletionType.ENTERED;
@@ -92,7 +92,7 @@ public class Waiting {
      */
     public void markAsNoShow() {
         if (this.status != WaitingStatus.CALLED) {
-            throw new InvalidStatusException("호출된 상태가 아닙니다.");
+            throw InvalidStatusException.notCalled();
         }
         this.status = WaitingStatus.COMPLETED;
         this.completionType = CompletionType.NO_SHOW;
@@ -109,7 +109,7 @@ public class Waiting {
      */
     public void cancel() {
         if (this.status != WaitingStatus.CALLED) {
-            throw new InvalidStatusException("호출된 상태가 아닙니다.");
+            throw InvalidStatusException.notCalled();
         }
         this.status = WaitingStatus.COMPLETED;
         this.completionType = CompletionType.CANCELLED;
