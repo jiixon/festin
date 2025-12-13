@@ -48,10 +48,17 @@ public class WaitingQueueStepDefinitions {
 
     @Before
     public void setup() {
+        userRepository.deleteAll();
+        boothRepository.deleteAll();
+        universityRepository.deleteAll();
+
         webTestClient = WebTestClient
                 .bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();
+        redisTemplate.getConnectionFactory()
+                .getConnection()
+                .flushAll();
     }
 
     @Given("테스트용 대학교가 존재한다")
