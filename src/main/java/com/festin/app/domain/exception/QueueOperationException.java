@@ -1,0 +1,22 @@
+package com.festin.app.domain.exception;
+
+import com.festin.app.common.exception.DomainException;
+import com.festin.app.common.exception.ErrorCode;
+
+/**
+ * 대기열 작업 실패 시 발생하는 예외
+ *
+ * 발생 상황:
+ * - 대기열 추가 후 순번 조회 실패
+ * - Redis 대기열 작업 중 일관성 문제 발생
+ */
+public class QueueOperationException extends DomainException {
+
+    private QueueOperationException(String message) {
+        super(ErrorCode.QUEUE_OPERATION_ERROR, message);
+    }
+
+    public static QueueOperationException enqueueFailed() {
+        return new QueueOperationException("대기열 추가 후 순번 조회에 실패했습니다.");
+    }
+}

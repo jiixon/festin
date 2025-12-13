@@ -1,13 +1,14 @@
 package com.festin.app.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserEntity extends BaseTimeEntity {
 
     @Id
@@ -25,4 +26,10 @@ public class UserEntity extends BaseTimeEntity {
 
     @Column(name = "notification_enabled", nullable = false)
     private Boolean notificationEnabled = true;
+
+    public UserEntity(String email, String nickname, String fcmToken) {
+        this.email = email;
+        this.nickname = nickname;
+        this.fcmToken = fcmToken;
+    }
 }
