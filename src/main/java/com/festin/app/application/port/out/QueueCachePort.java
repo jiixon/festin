@@ -64,4 +64,13 @@ public interface QueueCachePort {
      * @return 제거 성공 여부
      */
     boolean remove(Long boothId, Long userId);
+
+    /**
+     * 사용자의 대기 등록 시간 조회
+     *
+     * @param boothId 부스 ID
+     * @param userId 사용자 ID
+     * @return 등록 시간 (없으면 empty)
+     */
+    Optional<LocalDateTime> getRegisteredAt(Long boothId, Long userId);
 }

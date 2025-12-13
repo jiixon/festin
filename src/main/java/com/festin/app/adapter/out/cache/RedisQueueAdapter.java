@@ -77,4 +77,19 @@ public class RedisQueueAdapter implements QueueCachePort {
         Long removed = redisTemplate.opsForZSet().remove(key, userId.toString());
         return removed != null && removed > 0;
     }
+
+    @Override
+    public Optional<LocalDateTime> getRegisteredAt(Long boothId, Long userId) {
+        String key = QUEUE_KEY_PREFIX + boothId;
+
+        // score(등록 시간)를 조회
+        Double score = redisTemplate.opsForZSet().score(key, userId.toString());
+
+        if (score == null) {
+            return Optional.empty();
+        }
+
+        // Epoch seconds → LocalDateTime 변환
+        return Optional.of(LocalDateTime.ofEpochSecond(score.longValue(), 0, ZoneOffset.UTC));
+    }
 }

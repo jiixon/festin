@@ -41,9 +41,8 @@ public class GetPositionService implements GetPositionUseCase {
         // 3. 전체 대기자 수 조회
         int totalWaiting = queueCachePort.getQueueSize(boothId);
 
-        // 4. 예상 대기 시간 계산 (부스별 평균 체험 시간 * 앞 대기자 수)
-        // TODO: 부스별 평균 체험 시간은 Redis에 저장된 값 사용 (현재는 10분 고정)
-        int estimatedWaitTime = (position - 1) * 10;
+        // 4. 예상 대기 시간 계산
+        int estimatedWaitTime = calculateEstimatedWaitTime(position);
 
         return new PositionResult(
             boothId,
@@ -52,5 +51,18 @@ public class GetPositionService implements GetPositionUseCase {
             totalWaiting,
             estimatedWaitTime
         );
+    }
+
+    /**
+     * 예상 대기 시간 계산
+     *
+     * @param position 현재 순번
+     * @return 예상 대기 시간 (분)
+     */
+    private int calculateEstimatedWaitTime(int position) {
+        // 평균 체험 시간 20분 기준
+        // TODO: 향후 부스별 평균 시간을 Redis에서 조회하도록 개선
+        int avgTimePerPerson = 20;
+        return (position - 1) * avgTimePerPerson;
     }
 }
