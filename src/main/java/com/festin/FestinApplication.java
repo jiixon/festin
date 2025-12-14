@@ -1,15 +1,15 @@
-package com.festin.app;
+package com.festin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.festin")
 @EnableJpaAuditing
-public class AppApplication {
+public class FestinApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AppApplication.class, args);
+		SpringApplication.run(FestinApplication.class, args);
 	}
 
 }
