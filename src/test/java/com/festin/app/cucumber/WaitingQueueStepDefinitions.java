@@ -1,12 +1,13 @@
 package com.festin.app.cucumber;
 
-import com.festin.app.adapter.out.persistence.entity.BoothEntity;
-import com.festin.app.adapter.out.persistence.entity.UniversityEntity;
-import com.festin.app.adapter.out.persistence.entity.UserEntity;
-import com.festin.app.adapter.out.persistence.repository.BoothJpaRepository;
-import com.festin.app.adapter.out.persistence.repository.UniversityJpaRepository;
-import com.festin.app.adapter.out.persistence.repository.UserJpaRepository;
-import com.festin.app.domain.model.BoothStatus;
+import com.festin.app.booth.adapter.out.persistence.entity.BoothEntity;
+import com.festin.app.booth.adapter.out.persistence.repository.BoothJpaRepository;
+import com.festin.app.booth.domain.model.BoothStatus;
+import com.festin.app.university.adapter.out.persistence.entity.UniversityEntity;
+import com.festin.app.university.adapter.out.persistence.repository.UniversityJpaRepository;
+import com.festin.app.user.adapter.out.persistence.entity.UserEntity;
+import com.festin.app.user.adapter.out.persistence.repository.UserJpaRepository;
+import com.festin.app.waiting.adapter.out.persistence.repository.WaitingJpaRepository;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -26,6 +27,9 @@ public class WaitingQueueStepDefinitions {
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private WaitingJpaRepository waitingJpaRepository;
 
     @Autowired
     private UniversityJpaRepository universityRepository;
@@ -48,6 +52,7 @@ public class WaitingQueueStepDefinitions {
 
     @Before
     public void setup() {
+        waitingJpaRepository.deleteAll();
         userRepository.deleteAll();
         boothRepository.deleteAll();
         universityRepository.deleteAll();
@@ -84,7 +89,16 @@ public class WaitingQueueStepDefinitions {
                 BoothStatus.OPEN
         );
         testBoothId = boothRepository.save(booth).getId();
-        redisTemplate.opsForValue().set("booth:" + testBoothId + ":status", "OPEN");
+
+        // Redis에 부스 메타 정보 저장
+        String metaKey = "booth:" + testBoothId + ":meta";
+        redisTemplate.opsForHash().put(metaKey, "status", "OPEN");
+        redisTemplate.opsForHash().put(metaKey, "name", "테스트 부스");
+        redisTemplate.opsForHash().put(metaKey, "capacity", "10");
+
+
+        String currentKey = "booth:" + testBoothId + ":current";
+        redisTemplate.opsForValue().set(currentKey, "0");
     }
 
     @Given("테스트용 사용자가 존재한다")
@@ -93,7 +107,7 @@ public class WaitingQueueStepDefinitions {
         UserEntity user = new UserEntity(
                 uniqueEmail,
                 "테스트유저",
-                "010-1234-5678"
+                "fD7sXkPqR8u9ZcE4YVw2K3M0B1A6JHnO_LmTQp5iUeRZxC"
         );
         testUserId = userRepository.save(user).getId();
     }
@@ -146,7 +160,6 @@ public class WaitingQueueStepDefinitions {
 
     @Given("사용자가 부스에 이미 대기 등록되어 있다")
     public void userIsAlreadyEnqueued() {
-        // Redis에 직접 대기열 추가
         String queueKey = "queue:booth:" + testBoothId;
         double score = Instant.now().getEpochSecond();
         redisTemplate.opsForZSet().add(queueKey, testUserId.toString(), score);
@@ -169,5 +182,89 @@ public class WaitingQueueStepDefinitions {
     public void positionQueryIsSuccessful() {
         assertThat(lastResponseBody).isNotNull();
         assertThat(lastResponseBody).containsKeys("boothId", "boothName", "position");
+    }
+
+    @When("사용자가 대기를 취소한다")
+    public void userCancelsWaiting() {
+        lastResponse = webTestClient.delete()
+                .uri("/api/v1/waitings/" + testBoothId)
+                .header("X-User-Id", testUserId.toString())
+                .exchange();
+    }
+
+    @Then("대기 취소가 성공한다")
+    public void cancelIsSuccessful() {
+        // 204 No Content이므로 body 검증 불필요
+    }
+
+    @Then("대기열에서 제거되었다")
+    public void removedFromQueue() {
+        String queueKey = "queue:booth:" + testBoothId;
+        Long rank = redisTemplate.opsForZSet().rank(queueKey, testUserId.toString());
+        assertThat(rank).isNull();
+    }
+
+    @Given("부스에 대기 중인 사용자가 존재한다")
+    public void boothHasWaitingUser() {
+        String queueKey = "queue:booth:" + testBoothId;
+        double score = Instant.now().getEpochSecond();
+
+        redisTemplate.opsForZSet()
+                .add(queueKey, testUserId.toString(), score);
+
+        // 등록 시간 저장 (CallNextService에서 사용)
+        String registeredKey = "queue:booth:" + testBoothId + ":user:" + testUserId;
+        redisTemplate.opsForValue()
+                .set(registeredKey, Instant.now().toString());
+    }
+
+    @When("스태프가 다음 사람을 호출한다")
+    public void staffCallsNextUser() {
+        Map<String, Object> requestBody = Map.of(
+                "boothId", testBoothId
+        );
+
+        lastResponse = webTestClient.post()
+                .uri("/api/v1/waitings/call")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .exchange();
+
+        lastResponseBody = lastResponse
+                .expectBody(Map.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    @Then("호출이 성공한다")
+    public void callIsSuccessful() {
+        assertThat(lastResponseBody).isNotNull();
+    }
+
+    @Then("호출 결과에 사용자 정보가 포함된다")
+    public void responseContainsCallResult() {
+        assertThat(lastResponseBody).containsKeys(
+                "waitingId",
+                "userId",
+                "position",
+                "calledAt"
+        );
+
+        assertThat(lastResponseBody.get("userId"))
+                .isEqualTo(testUserId.intValue());
+    }
+
+    @Then("대기열에서 호출된 사용자는 제거되었다")
+    public void calledUserIsRemovedFromQueue() {
+        String queueKey = "queue:booth:" + testBoothId;
+        Long rank = redisTemplate.opsForZSet()
+                .rank(queueKey, testUserId.toString());
+
+        assertThat(rank).isNull();
+    }
+
+    @Then("호출된 사용자는 대기 기록으로 저장된다")
+    public void waitingIsPersisted() {
+        assertThat(waitingJpaRepository.count()).isEqualTo(1);
     }
 }
