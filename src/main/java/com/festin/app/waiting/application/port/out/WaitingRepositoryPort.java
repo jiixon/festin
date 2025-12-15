@@ -1,7 +1,7 @@
-package com.festin.waiting.application.port.out;
+package com.festin.app.waiting.application.port.out;
 
-import com.festin.waiting.domain.model.Waiting;
-import com.festin.waiting.domain.model.WaitingStatus;
+import com.festin.app.waiting.domain.model.Waiting;
+import com.festin.app.waiting.domain.model.WaitingStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,12 +35,4 @@ public interface WaitingRepositoryPort {
      */
     Optional<Waiting> findById(Long waitingId);
 
-    /**
-     * 사용자의 활성 대기 건수 조회
-     *
-     * @param userId 사용자 ID
-     * @param statuses 활성 상태 목록
-     * @return 활성 대기 건수
-     */
-    int countActiveByUserId(Long userId, List<WaitingStatus> statuses);
 }

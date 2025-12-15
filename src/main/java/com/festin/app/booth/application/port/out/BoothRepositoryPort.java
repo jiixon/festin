@@ -1,6 +1,6 @@
-package com.festin.booth.application.port.out;
+package com.festin.app.booth.application.port.out;
 
-import com.festin.booth.domain.model.Booth;
+import com.festin.app.booth.domain.model.Booth;
 
 import java.util.Optional;
 
@@ -24,11 +24,4 @@ public interface BoothRepositoryPort {
      */
     Optional<Booth> findById(Long boothId);
 
-    /**
-     * Booth 저장
-     *
-     * @param booth 저장할 Booth
-     * @return 저장된 Booth
-     */
-    Booth save(Booth booth);
 }

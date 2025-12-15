@@ -1,4 +1,4 @@
-package com.festin.waiting.adapter.in.web.dto;
+package com.festin.app.waiting.adapter.in.web.dto;
 
 import lombok.Data;
 

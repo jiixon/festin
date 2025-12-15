@@ -1,9 +1,9 @@
-package com.festin.waiting.adapter.out.persistence.mapper;
+package com.festin.app.waiting.adapter.out.persistence.mapper;
 
-import com.festin.booth.adapter.out.persistence.entity.BoothEntity;
-import com.festin.user.adapter.out.persistence.entity.UserEntity;
-import com.festin.waiting.adapter.out.persistence.entity.WaitingEntity;
-import com.festin.waiting.domain.model.Waiting;
+import com.festin.app.booth.adapter.out.persistence.entity.BoothEntity;
+import com.festin.app.user.adapter.out.persistence.entity.UserEntity;
+import com.festin.app.waiting.adapter.out.persistence.entity.WaitingEntity;
+import com.festin.app.waiting.domain.model.Waiting;
 import org.springframework.stereotype.Component;
 
 /**

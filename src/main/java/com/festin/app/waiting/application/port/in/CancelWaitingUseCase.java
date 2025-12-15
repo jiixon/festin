@@ -1,4 +1,6 @@
-package com.festin.waiting.application.port.in;
+package com.festin.app.waiting.application.port.in;
+
+import com.festin.app.waiting.domain.exception.WaitingNotFoundException;
 
 /**
  * 대기 취소 UseCase
@@ -19,7 +21,7 @@ public interface CancelWaitingUseCase {
      *
      * @param userId 사용자 ID
      * @param boothId 부스 ID
-     * @throws com.festin.waiting.domain.exception.WaitingNotFoundException 대기 중이 아닌 경우
+     * @throws WaitingNotFoundException 대기 중이 아닌 경우
      */
     void cancel(Long userId, Long boothId);
 }

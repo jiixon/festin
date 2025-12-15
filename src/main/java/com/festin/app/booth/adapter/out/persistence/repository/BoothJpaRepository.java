@@ -1,6 +1,6 @@
-package com.festin.booth.adapter.out.persistence.repository;
+package com.festin.app.booth.adapter.out.persistence.repository;
 
-import com.festin.booth.adapter.out.persistence.entity.BoothEntity;
+import com.festin.app.booth.adapter.out.persistence.entity.BoothEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**

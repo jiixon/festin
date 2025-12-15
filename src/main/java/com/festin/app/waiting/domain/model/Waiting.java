@@ -1,6 +1,6 @@
-package com.festin.waiting.domain.model;
+package com.festin.app.waiting.domain.model;
 
-import com.festin.waiting.domain.exception.InvalidStatusException;
+import com.festin.app.waiting.domain.exception.InvalidStatusException;
 
 import java.time.LocalDateTime;
 
@@ -96,23 +96,6 @@ public class Waiting {
         }
         this.status = WaitingStatus.COMPLETED;
         this.completionType = CompletionType.NO_SHOW;
-        this.completedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 대기 취소
-     *
-     * 비즈니스 규칙:
-     * - 현재 상태가 CALLED여야 함
-     * - 상태를 COMPLETED로 전이
-     * - 완료 유형을 CANCELLED로 설정
-     */
-    public void cancel() {
-        if (this.status != WaitingStatus.CALLED) {
-            throw InvalidStatusException.notCalled();
-        }
-        this.status = WaitingStatus.COMPLETED;
-        this.completionType = CompletionType.CANCELLED;
         this.completedAt = LocalDateTime.now();
     }
 

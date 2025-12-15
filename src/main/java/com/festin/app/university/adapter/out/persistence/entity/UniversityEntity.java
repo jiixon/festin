@@ -1,5 +1,5 @@
-package com.festin.university.adapter.out.persistence.entity;
-import com.festin.common.BaseTimeEntity;
+package com.festin.app.university.adapter.out.persistence.entity;
+import com.festin.app.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

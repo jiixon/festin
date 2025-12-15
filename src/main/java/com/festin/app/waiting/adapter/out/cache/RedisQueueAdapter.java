@@ -1,6 +1,6 @@
-package com.festin.waiting.adapter.out.cache;
+package com.festin.app.waiting.adapter.out.cache;
 
-import com.festin.waiting.application.port.out.QueueCachePort;
+import com.festin.app.waiting.application.port.out.QueueCachePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -15,6 +15,7 @@ import java.util.Optional;
  *
  * QueueCachePort 구현체
  * Redis Sorted Set을 사용한 대기열 관리
+ * Redis Set을 사용한 사용자별 활성 부스 목록 관리
  */
 @Component
 @RequiredArgsConstructor
@@ -23,6 +24,8 @@ public class RedisQueueAdapter implements QueueCachePort {
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String QUEUE_KEY_PREFIX = "queue:booth:";
+    private static final String USER_ACTIVE_BOOTHS_KEY_PREFIX = "user:";
+    private static final String USER_ACTIVE_BOOTHS_KEY_SUFFIX = ":active_booths";
 
     @Override
     public boolean enqueue(Long boothId, Long userId, LocalDateTime registeredAt) {
@@ -91,5 +94,27 @@ public class RedisQueueAdapter implements QueueCachePort {
 
         // Epoch seconds → LocalDateTime 변환
         return Optional.of(LocalDateTime.ofEpochSecond(score.longValue(), 0, ZoneOffset.UTC));
+    }
+
+    @Override
+    public int getUserActiveBoothCount(Long userId) {
+        String key = USER_ACTIVE_BOOTHS_KEY_PREFIX + userId + USER_ACTIVE_BOOTHS_KEY_SUFFIX;
+
+        Long count = redisTemplate.opsForSet().size(key);
+        return count != null ? count.intValue() : 0;
+    }
+
+    @Override
+    public void addUserActiveBooth(Long userId, Long boothId) {
+        String key = USER_ACTIVE_BOOTHS_KEY_PREFIX + userId + USER_ACTIVE_BOOTHS_KEY_SUFFIX;
+
+        redisTemplate.opsForSet().add(key, boothId.toString());
+    }
+
+    @Override
+    public void removeUserActiveBooth(Long userId, Long boothId) {
+        String key = USER_ACTIVE_BOOTHS_KEY_PREFIX + userId + USER_ACTIVE_BOOTHS_KEY_SUFFIX;
+
+        redisTemplate.opsForSet().remove(key, boothId.toString());
     }
 }

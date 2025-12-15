@@ -1,17 +1,15 @@
-package com.festin.waiting.application.service;
+package com.festin.app.waiting.application.service;
 
-import com.festin.waiting.application.port.in.EnqueueUseCase;
-import com.festin.waiting.application.port.in.command.EnqueueCommand;
-import com.festin.waiting.application.port.in.result.EnqueueResult;
-import com.festin.booth.application.port.out.BoothCachePort;
-import com.festin.booth.domain.BoothNotFoundException;
-import com.festin.booth.domain.model.Booth;
-import com.festin.booth.domain.model.BoothStatus;
-import com.festin.waiting.application.port.out.QueueCachePort;
-import com.festin.waiting.application.port.out.WaitingRepositoryPort;
-import com.festin.waiting.domain.exception.QueueOperationException;
-import com.festin.waiting.domain.model.WaitingStatus;
-import com.festin.waiting.domain.policy.MaxWaitingPolicy;
+import com.festin.app.waiting.application.port.in.EnqueueUseCase;
+import com.festin.app.waiting.application.port.in.command.EnqueueCommand;
+import com.festin.app.waiting.application.port.in.result.EnqueueResult;
+import com.festin.app.booth.application.port.out.BoothCachePort;
+import com.festin.app.booth.domain.BoothNotFoundException;
+import com.festin.app.booth.domain.model.Booth;
+import com.festin.app.booth.domain.model.BoothStatus;
+import com.festin.app.waiting.application.port.out.QueueCachePort;
+import com.festin.app.waiting.domain.exception.QueueOperationException;
+import com.festin.app.waiting.domain.policy.MaxWaitingPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +30,6 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class EnqueueService implements EnqueueUseCase {
 
-    private final WaitingRepositoryPort waitingRepositoryPort;
     private final QueueCachePort queueCachePort;
     private final BoothCachePort boothCachePort;
 
@@ -86,12 +83,15 @@ public class EnqueueService implements EnqueueUseCase {
             );
         }
 
-        // 최대 대기 수 검증 (2개 부스 제한) - 신규 등록인 경우에만
-        int activeCount = waitingRepositoryPort.countActiveByUserId(userId, WaitingStatus.ACTIVE_STATUSES);
+        // 최대 대기 수 검증 (2개 부스 제한)
+        int activeCount = queueCachePort.getUserActiveBoothCount(userId);
         maxWaitingPolicy.validate(activeCount);
 
         // Redis 대기열에 추가 (신규 등록)
         queueCachePort.enqueue(boothId, userId, now);
+
+        // 사용자 활성 부스 목록에 추가
+        queueCachePort.addUserActiveBooth(userId, boothId);
 
         // 순번 및 대기자 수 조회
         // TODO: Lua 스크립트로 원자성 보장 (enqueue + getPosition을 하나의 작업으로)

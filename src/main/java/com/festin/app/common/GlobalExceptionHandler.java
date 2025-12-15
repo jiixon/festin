@@ -1,8 +1,8 @@
-package com.festin.common;
+package com.festin.app.common;
 
-import com.festin.common.dto.ErrorResponse;
-import com.festin.common.exception.DomainException;
-import com.festin.common.exception.ErrorCode;
+import com.festin.app.common.dto.ErrorResponse;
+import com.festin.app.common.exception.DomainException;
+import com.festin.app.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

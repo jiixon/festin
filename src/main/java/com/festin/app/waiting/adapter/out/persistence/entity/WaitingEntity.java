@@ -1,10 +1,10 @@
-package com.festin.waiting.adapter.out.persistence.entity;
+package com.festin.app.waiting.adapter.out.persistence.entity;
 
-import com.festin.booth.adapter.out.persistence.entity.BoothEntity;
-import com.festin.common.BaseTimeEntity;
-import com.festin.user.adapter.out.persistence.entity.UserEntity;
-import com.festin.waiting.domain.model.CompletionType;
-import com.festin.waiting.domain.model.WaitingStatus;
+import com.festin.app.booth.adapter.out.persistence.entity.BoothEntity;
+import com.festin.app.common.BaseTimeEntity;
+import com.festin.app.user.adapter.out.persistence.entity.UserEntity;
+import com.festin.app.waiting.domain.model.CompletionType;
+import com.festin.app.waiting.domain.model.WaitingStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

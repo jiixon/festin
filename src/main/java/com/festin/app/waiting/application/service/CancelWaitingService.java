@@ -1,8 +1,8 @@
-package com.festin.waiting.application.service;
+package com.festin.app.waiting.application.service;
 
-import com.festin.waiting.application.port.in.CancelWaitingUseCase;
-import com.festin.waiting.application.port.out.QueueCachePort;
-import com.festin.waiting.domain.exception.WaitingNotFoundException;
+import com.festin.app.waiting.application.port.in.CancelWaitingUseCase;
+import com.festin.app.waiting.application.port.out.QueueCachePort;
+import com.festin.app.waiting.domain.exception.WaitingNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,5 +32,7 @@ public class CancelWaitingService implements CancelWaitingUseCase {
         // Redis 대기열에서 제거
         queueCachePort.remove(boothId, userId);
 
+        // 사용자 활성 부스 목록에서 제거
+        queueCachePort.removeUserActiveBooth(userId, boothId);
     }
 }

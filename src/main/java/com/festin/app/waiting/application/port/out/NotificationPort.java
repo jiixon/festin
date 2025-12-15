@@ -1,4 +1,4 @@
-package com.festin.waiting.application.port.out;
+package com.festin.app.waiting.application.port.out;
 
 /**
  * 알림 발송 Port

@@ -1,4 +1,4 @@
-package com.festin.common.exception;
+package com.festin.app.common.exception;
 
 import lombok.Getter;
 

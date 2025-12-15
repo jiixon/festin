@@ -1,6 +1,6 @@
-package com.festin.waiting.adapter.in.web.dto;
+package com.festin.app.waiting.adapter.in.web.dto;
 
-import com.festin.waiting.application.port.in.result.PositionResult;
+import com.festin.app.waiting.application.port.in.result.PositionResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

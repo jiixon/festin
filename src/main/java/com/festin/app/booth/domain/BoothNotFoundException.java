@@ -1,7 +1,7 @@
-package com.festin.booth.domain;
+package com.festin.app.booth.domain;
 
-import com.festin.common.exception.DomainException;
-import com.festin.common.exception.ErrorCode;
+import com.festin.app.common.exception.DomainException;
+import com.festin.app.common.exception.ErrorCode;
 
 /**
  * 부스를 찾을 수 없는 경우 발생하는 예외

@@ -1,7 +1,7 @@
-package com.festin.waiting.domain.exception;
+package com.festin.app.waiting.domain.exception;
 
-import com.festin.common.exception.DomainException;
-import com.festin.common.exception.ErrorCode;
+import com.festin.app.common.exception.DomainException;
+import com.festin.app.common.exception.ErrorCode;
 
 /**
  * 잘못된 상태 전이를 시도한 경우 발생하는 예외

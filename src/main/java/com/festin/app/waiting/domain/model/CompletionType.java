@@ -1,4 +1,4 @@
-package com.festin.waiting.domain.model;
+package com.festin.app.waiting.domain.model;
 
 /**
  * 완료 유형

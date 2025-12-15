@@ -1,4 +1,4 @@
-package com.festin.common;
+package com.festin.app.common;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

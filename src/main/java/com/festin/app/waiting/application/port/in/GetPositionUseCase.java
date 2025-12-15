@@ -1,6 +1,7 @@
-package com.festin.waiting.application.port.in;
+package com.festin.app.waiting.application.port.in;
 
-import com.festin.waiting.application.port.in.result.PositionResult;
+import com.festin.app.waiting.application.port.in.result.PositionResult;
+import com.festin.app.waiting.domain.exception.WaitingNotFoundException;
 
 /**
  * 순번 조회 UseCase
@@ -22,7 +23,7 @@ public interface GetPositionUseCase {
      * @param userId 사용자 ID
      * @param boothId 부스 ID
      * @return 순번 조회 결과
-     * @throws com.festin.waiting.domain.exception.WaitingNotFoundException 대기 중이 아닌 경우
+     * @throws WaitingNotFoundException 대기 중이 아닌 경우
      */
     PositionResult getPosition(Long userId, Long boothId);
 }

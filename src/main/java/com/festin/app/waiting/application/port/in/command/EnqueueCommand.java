@@ -1,4 +1,4 @@
-package com.festin.waiting.application.port.in.command;
+package com.festin.app.waiting.application.port.in.command;
 
 /**
  * 대기 등록 Command

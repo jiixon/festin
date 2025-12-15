@@ -1,4 +1,4 @@
-package com.festin.cucumber;
+package com.festin.app.cucumber;
 
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;

@@ -1,9 +1,7 @@
-package com.festin.booth.domain.model;
+package com.festin.app.booth.domain.model;
 
-import com.festin.booth.domain.BoothClosedException;
-import com.festin.booth.domain.BoothFullException;
-
-import java.time.LocalTime;
+import com.festin.app.booth.domain.BoothClosedException;
+import com.festin.app.booth.domain.BoothFullException;
 
 /**
  * Booth (부스) - 도메인 모델

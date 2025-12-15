@@ -1,6 +1,6 @@
-package com.festin.waiting.domain.policy;
+package com.festin.app.waiting.domain.policy;
 
-import com.festin.waiting.domain.exception.MaxWaitingExceededException;
+import com.festin.app.waiting.domain.exception.MaxWaitingExceededException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MaxWaitingPolicy {
-
     private static final int MAX_ACTIVE_BOOTHS = 2;
 
     /**

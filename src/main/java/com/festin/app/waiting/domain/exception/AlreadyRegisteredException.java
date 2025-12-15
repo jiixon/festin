@@ -1,7 +1,7 @@
-package com.festin.waiting.domain.exception;
+package com.festin.app.waiting.domain.exception;
 
-import com.festin.common.exception.DomainException;
-import com.festin.common.exception.ErrorCode;
+import com.festin.app.common.exception.DomainException;
+import com.festin.app.common.exception.ErrorCode;
 
 /**
  * 이미 해당 부스에 대기 등록된 경우 발생하는 예외

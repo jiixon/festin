@@ -1,9 +1,9 @@
-package com.festin.booth.adapter.out.persistence;
+package com.festin.app.booth.adapter.out.persistence;
 
-import com.festin.booth.adapter.out.persistence.mapper.BoothMapper;
-import com.festin.booth.adapter.out.persistence.repository.BoothJpaRepository;
-import com.festin.booth.application.port.out.BoothRepositoryPort;
-import com.festin.booth.domain.model.Booth;
+import com.festin.app.booth.adapter.out.persistence.mapper.BoothMapper;
+import com.festin.app.booth.adapter.out.persistence.repository.BoothJpaRepository;
+import com.festin.app.booth.application.port.out.BoothRepositoryPort;
+import com.festin.app.booth.domain.model.Booth;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,11 +26,5 @@ public class JpaBoothAdapter implements BoothRepositoryPort {
     public Optional<Booth> findById(Long boothId) {
         return boothJpaRepository.findById(boothId)
             .map(boothMapper::toDomain);
-    }
-
-    @Override
-    public Booth save(Booth booth) {
-        // 부스 저장은 관리자 기능에서 사용 (현재 UseCase에서는 미사용)
-        throw new UnsupportedOperationException("부스 저장은 관리자 기능에서만 사용됩니다.");
     }
 }
