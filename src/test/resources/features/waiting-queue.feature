@@ -21,3 +21,10 @@ Feature: Waiting Queue API
     And 응답 상태 코드는 200이다
     And 응답에 부스 정보가 포함된다
     And 응답에 순번 정보가 포함된다
+
+  Scenario: Successfully cancel waiting
+    Given 사용자가 부스에 이미 대기 등록되어 있다
+    When 사용자가 대기를 취소한다
+    Then 대기 취소가 성공한다
+    And 응답 상태 코드는 204이다
+    And 대기열에서 제거되었다

@@ -1,12 +1,12 @@
 package com.festin.app.cucumber;
 
-import com.festin.app.adapter.out.persistence.entity.BoothEntity;
-import com.festin.app.adapter.out.persistence.entity.UniversityEntity;
-import com.festin.app.adapter.out.persistence.entity.UserEntity;
-import com.festin.app.adapter.out.persistence.repository.BoothJpaRepository;
-import com.festin.app.adapter.out.persistence.repository.UniversityJpaRepository;
-import com.festin.app.adapter.out.persistence.repository.UserJpaRepository;
-import com.festin.app.domain.model.BoothStatus;
+import com.festin.booth.adapter.out.persistence.entity.BoothEntity;
+import com.festin.booth.adapter.out.persistence.repository.BoothJpaRepository;
+import com.festin.booth.domain.model.BoothStatus;
+import com.festin.university.adapter.out.persistence.entity.UniversityEntity;
+import com.festin.university.adapter.out.persistence.repository.UniversityJpaRepository;
+import com.festin.user.adapter.out.persistence.entity.UserEntity;
+import com.festin.user.adapter.out.persistence.repository.UserJpaRepository;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -169,5 +169,25 @@ public class WaitingQueueStepDefinitions {
     public void positionQueryIsSuccessful() {
         assertThat(lastResponseBody).isNotNull();
         assertThat(lastResponseBody).containsKeys("boothId", "boothName", "position");
+    }
+
+    @When("사용자가 대기를 취소한다")
+    public void userCancelsWaiting() {
+        lastResponse = webTestClient.delete()
+                .uri("/api/v1/waitings/" + testBoothId)
+                .header("X-User-Id", testUserId.toString())
+                .exchange();
+    }
+
+    @Then("대기 취소가 성공한다")
+    public void cancelIsSuccessful() {
+        // 204 No Content이므로 body 검증 불필요
+    }
+
+    @Then("대기열에서 제거되었다")
+    public void removedFromQueue() {
+        String queueKey = "queue:booth:" + testBoothId;
+        Long rank = redisTemplate.opsForZSet().rank(queueKey, testUserId.toString());
+        assertThat(rank).isNull(); // 대기열에 없어야 함
     }
 }
