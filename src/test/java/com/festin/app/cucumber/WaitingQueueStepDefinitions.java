@@ -1,4 +1,4 @@
-package com.festin.app.cucumber;
+package com.festin.cucumber;
 
 import com.festin.booth.adapter.out.persistence.entity.BoothEntity;
 import com.festin.booth.adapter.out.persistence.repository.BoothJpaRepository;

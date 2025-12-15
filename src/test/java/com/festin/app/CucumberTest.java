@@ -1,4 +1,4 @@
-package com.festin.app;
+package com.festin;
 
 import org.junit.platform.suite.api.ConfigurationParameter;
 import org.junit.platform.suite.api.IncludeEngines;
@@ -11,7 +11,7 @@ import static io.cucumber.core.options.Constants.PLUGIN_PROPERTY_NAME;
 @Suite
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
-@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.festin.app.cucumber")
+@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.festin.cucumber")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty, html:build/reports/cucumber/cucumber-report.html")
 public class CucumberTest {
 }
