@@ -1,12 +1,12 @@
-package com.festin.app.application.service;
+package com.festin.waiting.application.service;
 
-import com.festin.app.application.port.in.GetPositionUseCase;
-import com.festin.app.application.port.in.result.PositionResult;
-import com.festin.app.application.port.out.BoothRepositoryPort;
-import com.festin.app.application.port.out.QueueCachePort;
-import com.festin.app.domain.exception.BoothNotFoundException;
-import com.festin.app.domain.exception.WaitingNotFoundException;
-import com.festin.app.domain.model.Booth;
+import com.festin.waiting.application.port.in.GetPositionUseCase;
+import com.festin.waiting.application.port.in.result.PositionResult;
+import com.festin.booth.application.port.out.BoothRepositoryPort;
+import com.festin.waiting.application.port.out.QueueCachePort;
+import com.festin.booth.domain.BoothNotFoundException;
+import com.festin.waiting.domain.exception.WaitingNotFoundException;
+import com.festin.booth.domain.model.Booth;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

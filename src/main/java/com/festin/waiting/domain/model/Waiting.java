@@ -1,6 +1,6 @@
-package com.festin.app.domain.model;
+package com.festin.waiting.domain.model;
 
-import com.festin.app.domain.exception.InvalidStatusException;
+import com.festin.waiting.domain.exception.InvalidStatusException;
 
 import java.time.LocalDateTime;
 

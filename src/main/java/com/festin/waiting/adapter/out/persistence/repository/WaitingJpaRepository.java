@@ -1,7 +1,7 @@
-package com.festin.app.adapter.out.persistence.repository;
+package com.festin.waiting.adapter.out.persistence.repository;
 
-import com.festin.app.adapter.out.persistence.entity.WaitingEntity;
-import com.festin.app.domain.model.WaitingStatus;
+import com.festin.waiting.adapter.out.persistence.entity.WaitingEntity;
+import com.festin.waiting.domain.model.WaitingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

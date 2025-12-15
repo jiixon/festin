@@ -1,7 +1,7 @@
-package com.festin.app.adapter.out.persistence.mapper;
+package com.festin.booth.adapter.out.persistence.mapper;
 
-import com.festin.app.adapter.out.persistence.entity.BoothEntity;
-import com.festin.app.domain.model.Booth;
+import com.festin.booth.adapter.out.persistence.entity.BoothEntity;
+import com.festin.booth.domain.model.Booth;
 import org.springframework.stereotype.Component;
 
 /**

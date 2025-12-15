@@ -1,4 +1,4 @@
-package com.festin.app.application.port.in;
+package com.festin.waiting.application.port.in;
 
 /**
  * 입장 확인 UseCase
@@ -20,8 +20,8 @@ public interface ConfirmEntranceUseCase {
      *
      * @param boothId 부스 ID
      * @param waitingId 대기 ID
-     * @throws com.festin.app.domain.exception.WaitingNotFoundException 대기 정보 없음
-     * @throws com.festin.app.domain.exception.InvalidStatusException 잘못된 상태
+     * @throws com.festin.waiting.domain.exception.WaitingNotFoundException 대기 정보 없음
+     * @throws com.festin.waiting.domain.exception.InvalidStatusException 잘못된 상태
      */
     void confirmEntrance(Long boothId, Long waitingId);
 }

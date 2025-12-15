@@ -1,6 +1,6 @@
-package com.festin.app.application.port.out;
+package com.festin.booth.application.port.out;
 
-import com.festin.app.domain.model.Booth;
+import com.festin.booth.domain.model.Booth;
 
 import java.util.Optional;
 

@@ -1,9 +1,9 @@
-package com.festin.app.adapter.out.persistence;
+package com.festin.booth.adapter.out.persistence;
 
-import com.festin.app.adapter.out.persistence.mapper.BoothMapper;
-import com.festin.app.adapter.out.persistence.repository.BoothJpaRepository;
-import com.festin.app.application.port.out.BoothRepositoryPort;
-import com.festin.app.domain.model.Booth;
+import com.festin.booth.adapter.out.persistence.mapper.BoothMapper;
+import com.festin.booth.adapter.out.persistence.repository.BoothJpaRepository;
+import com.festin.booth.application.port.out.BoothRepositoryPort;
+import com.festin.booth.domain.model.Booth;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

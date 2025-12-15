@@ -1,4 +1,4 @@
-package com.festin.app.domain.model;
+package com.festin.user.domain.model;
 
 /**
  * User (사용자) - 도메인 모델

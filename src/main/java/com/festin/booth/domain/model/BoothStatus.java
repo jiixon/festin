@@ -1,4 +1,4 @@
-package com.festin.app.domain.model;
+package com.festin.booth.domain.model;
 
 /**
  * 부스 운영 상태

@@ -1,11 +1,11 @@
-package com.festin.app.adapter.out.persistence;
+package com.festin.waiting.adapter.out.persistence;
 
-import com.festin.app.adapter.out.persistence.entity.WaitingEntity;
-import com.festin.app.adapter.out.persistence.mapper.WaitingMapper;
-import com.festin.app.adapter.out.persistence.repository.WaitingJpaRepository;
-import com.festin.app.application.port.out.WaitingRepositoryPort;
-import com.festin.app.domain.model.Waiting;
-import com.festin.app.domain.model.WaitingStatus;
+import com.festin.waiting.adapter.out.persistence.entity.WaitingEntity;
+import com.festin.waiting.adapter.out.persistence.mapper.WaitingMapper;
+import com.festin.waiting.adapter.out.persistence.repository.WaitingJpaRepository;
+import com.festin.waiting.application.port.out.WaitingRepositoryPort;
+import com.festin.waiting.domain.model.Waiting;
+import com.festin.waiting.domain.model.WaitingStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

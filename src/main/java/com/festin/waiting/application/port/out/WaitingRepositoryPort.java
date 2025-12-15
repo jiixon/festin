@@ -1,7 +1,7 @@
-package com.festin.app.application.port.out;
+package com.festin.waiting.application.port.out;
 
-import com.festin.app.domain.model.Waiting;
-import com.festin.app.domain.model.WaitingStatus;
+import com.festin.waiting.domain.model.Waiting;
+import com.festin.waiting.domain.model.WaitingStatus;
 
 import java.util.List;
 import java.util.Optional;

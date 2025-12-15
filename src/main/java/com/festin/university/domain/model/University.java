@@ -1,4 +1,4 @@
-package com.festin.app.domain.model;
+package com.festin.university.domain.model;
 
 /**
  * University (대학) - 도메인 모델

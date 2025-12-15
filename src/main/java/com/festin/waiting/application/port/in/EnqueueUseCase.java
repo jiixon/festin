@@ -1,7 +1,7 @@
-package com.festin.app.application.port.in;
+package com.festin.waiting.application.port.in;
 
-import com.festin.app.application.port.in.command.EnqueueCommand;
-import com.festin.app.application.port.in.result.EnqueueResult;
+import com.festin.waiting.application.port.in.command.EnqueueCommand;
+import com.festin.waiting.application.port.in.result.EnqueueResult;
 
 /**
  * 대기 등록 UseCase
@@ -25,9 +25,9 @@ public interface EnqueueUseCase {
      *
      * @param command 등록 명령 (userId, boothId)
      * @return 등록 결과 (순번, 대기자 수, 예상 대기 시간)
-     * @throws com.festin.app.domain.exception.AlreadyRegisteredException 이미 등록된 경우
-     * @throws com.festin.app.domain.exception.MaxWaitingExceededException 최대 대기 수 초과
-     * @throws com.festin.app.domain.exception.BoothClosedException 부스 마감 상태
+     * @throws com.festin.waiting.domain.exception.AlreadyRegisteredException 이미 등록된 경우
+     * @throws com.festin.waiting.domain.exception.MaxWaitingExceededException 최대 대기 수 초과
+     * @throws com.festin.booth.domain.BoothClosedException 부스 마감 상태
      */
     EnqueueResult enqueue(EnqueueCommand command);
 }

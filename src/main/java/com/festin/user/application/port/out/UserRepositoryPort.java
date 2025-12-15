@@ -1,6 +1,6 @@
-package com.festin.app.application.port.out;
+package com.festin.user.application.port.out;
 
-import com.festin.app.domain.model.User;
+import com.festin.user.domain.model.User;
 
 import java.util.Optional;
 

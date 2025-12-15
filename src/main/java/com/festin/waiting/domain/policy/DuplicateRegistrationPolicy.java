@@ -1,6 +1,6 @@
-package com.festin.app.domain.policy;
+package com.festin.waiting.domain.policy;
 
-import com.festin.app.domain.exception.AlreadyRegisteredException;
+import com.festin.waiting.domain.exception.AlreadyRegisteredException;
 import org.springframework.stereotype.Component;
 
 /**

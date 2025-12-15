@@ -1,4 +1,4 @@
-package com.festin.app.domain.model;
+package com.festin.waiting.domain.model;
 
 import java.util.List;
 

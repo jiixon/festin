@@ -1,4 +1,4 @@
-package com.festin.app.application.port.in.result;
+package com.festin.waiting.application.port.in.result;
 
 /**
  * 순번 조회 Result

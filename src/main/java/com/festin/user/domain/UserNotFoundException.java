@@ -1,7 +1,7 @@
-package com.festin.app.domain.exception;
+package com.festin.user.domain;
 
-import com.festin.app.common.exception.DomainException;
-import com.festin.app.common.exception.ErrorCode;
+import com.festin.common.exception.DomainException;
+import com.festin.common.exception.ErrorCode;
 
 /**
  * 사용자를 찾을 수 없는 경우 발생하는 예외

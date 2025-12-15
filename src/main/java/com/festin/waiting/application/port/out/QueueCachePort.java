@@ -1,4 +1,4 @@
-package com.festin.app.application.port.out;
+package com.festin.waiting.application.port.out;
 
 import java.time.LocalDateTime;
 import java.util.Optional;

@@ -1,6 +1,6 @@
-package com.festin.app.application.port.in;
+package com.festin.waiting.application.port.in;
 
-import com.festin.app.application.port.in.result.CallResult;
+import com.festin.waiting.application.port.in.result.CallResult;
 
 /**
  * 다음 사람 호출 UseCase
@@ -26,8 +26,8 @@ public interface CallNextUseCase {
      *
      * @param boothId 부스 ID
      * @return 호출 결과
-     * @throws com.festin.app.domain.exception.BoothFullException 정원 초과
-     * @throws com.festin.app.domain.exception.QueueEmptyException 대기열 비어있음
+     * @throws com.festin.waiting.domain.exception.BoothFullException 정원 초과
+     * @throws com.festin.waiting.domain.exception.QueueEmptyException 대기열 비어있음
      */
     CallResult callNext(Long boothId);
 }

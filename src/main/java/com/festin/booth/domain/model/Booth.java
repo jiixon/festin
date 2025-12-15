@@ -1,7 +1,7 @@
-package com.festin.app.domain.model;
+package com.festin.booth.domain.model;
 
-import com.festin.app.domain.exception.BoothClosedException;
-import com.festin.app.domain.exception.BoothFullException;
+import com.festin.booth.domain.BoothClosedException;
+import com.festin.booth.domain.BoothFullException;
 
 import java.time.LocalTime;
 

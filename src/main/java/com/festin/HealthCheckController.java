@@ -1,4 +1,4 @@
-package com.festin.app.adapter.in.web;
+package com.festin;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

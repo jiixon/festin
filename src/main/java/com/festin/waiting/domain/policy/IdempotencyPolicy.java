@@ -1,7 +1,7 @@
-package com.festin.app.domain.policy;
+package com.festin.waiting.domain.policy;
 
-import com.festin.app.application.port.out.IdempotencyCachePort;
-import com.festin.app.domain.exception.AlreadyRegisteredException;
+import com.festin.waiting.application.port.out.IdempotencyCachePort;
+import com.festin.waiting.domain.exception.AlreadyRegisteredException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
  *
  * 비즈니스 규칙:
  * - 당일 내 같은 부스 재등록 불가
- * - 멱등성 키로 중복 요청 방지 (TTL 24시간)
+ * - 멱등성 키로 중복 요청 방지
  *
  * 멱등성 키 형식:
  * - "idempotency:userId:{userId}:boothId:{boothId}:date:{yyyyMMdd}"

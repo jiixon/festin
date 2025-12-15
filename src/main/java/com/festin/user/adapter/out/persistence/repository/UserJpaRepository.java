@@ -1,6 +1,6 @@
-package com.festin.app.adapter.out.persistence.repository;
+package com.festin.user.adapter.out.persistence.repository;
 
-import com.festin.app.adapter.out.persistence.entity.UserEntity;
+import com.festin.user.adapter.out.persistence.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**

@@ -1,6 +1,8 @@
-package com.festin.app.adapter.out.persistence.entity;
+package com.festin.booth.adapter.out.persistence.entity;
 
-import com.festin.app.domain.model.BoothStatus;
+import com.festin.booth.domain.model.BoothStatus;
+import com.festin.common.BaseTimeEntity;
+import com.festin.university.adapter.out.persistence.entity.UniversityEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

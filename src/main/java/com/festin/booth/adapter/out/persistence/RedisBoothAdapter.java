@@ -1,7 +1,7 @@
-package com.festin.app.adapter.out.cache;
+package com.festin.booth.adapter.out.cache;
 
-import com.festin.app.application.port.out.BoothCachePort;
-import com.festin.app.domain.model.BoothStatus;
+import com.festin.booth.application.port.out.BoothCachePort;
+import com.festin.booth.domain.model.BoothStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;

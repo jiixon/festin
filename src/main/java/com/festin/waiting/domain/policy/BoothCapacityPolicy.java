@@ -1,6 +1,6 @@
-package com.festin.app.domain.policy;
+package com.festin.waiting.domain.policy;
 
-import com.festin.app.domain.exception.BoothFullException;
+import com.festin.booth.domain.BoothFullException;
 
 /**
  * 부스 정원 정책

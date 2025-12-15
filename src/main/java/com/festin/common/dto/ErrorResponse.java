@@ -1,7 +1,7 @@
-package com.festin.app.common.dto;
+package com.festin.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.festin.app.common.exception.ErrorCode;
+import com.festin.common.exception.ErrorCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

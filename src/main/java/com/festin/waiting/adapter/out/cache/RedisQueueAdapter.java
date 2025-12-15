@@ -1,6 +1,6 @@
-package com.festin.app.adapter.out.cache;
+package com.festin.waiting.adapter.out.cache;
 
-import com.festin.app.application.port.out.QueueCachePort;
+import com.festin.waiting.application.port.out.QueueCachePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;

@@ -1,4 +1,4 @@
-package com.festin.app.common.exception;
+package com.festin.common.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
