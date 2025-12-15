@@ -28,3 +28,11 @@ Feature: Waiting Queue API
     Then 대기 취소가 성공한다
     And 응답 상태 코드는 204이다
     And 대기열에서 제거되었다
+
+  Scenario: Successfully call next waiting user
+    Given 부스에 대기 중인 사용자가 존재한다
+    When 스태프가 다음 사람을 호출한다
+    Then 호출이 성공한다
+    And 응답 상태 코드는 200이다
+    And 호출 결과에 사용자 정보가 포함된다
+    And 대기열에서 호출된 사용자는 제거되었다

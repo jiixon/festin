@@ -1,4 +1,4 @@
-package com.festin.cucumber;
+package com.festin.app.cucumber;
 
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
