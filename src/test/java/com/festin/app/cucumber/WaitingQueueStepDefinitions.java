@@ -163,6 +163,10 @@ public class WaitingQueueStepDefinitions {
         String queueKey = "queue:booth:" + testBoothId;
         double score = Instant.now().getEpochSecond();
         redisTemplate.opsForZSet().add(queueKey, testUserId.toString(), score);
+
+        // 사용자 활성 부스 목록에도 추가
+        String activeBoothsKey = "user:" + testUserId + ":active_booths";
+        redisTemplate.opsForSet().add(activeBoothsKey, testBoothId.toString());
     }
 
     @When("사용자가 부스의 순번을 조회한다")
@@ -206,16 +210,14 @@ public class WaitingQueueStepDefinitions {
 
     @Given("부스에 대기 중인 사용자가 존재한다")
     public void boothHasWaitingUser() {
+        // 대기열에 추가 (score에 등록 시간 포함)
         String queueKey = "queue:booth:" + testBoothId;
         double score = Instant.now().getEpochSecond();
+        redisTemplate.opsForZSet().add(queueKey, testUserId.toString(), score);
 
-        redisTemplate.opsForZSet()
-                .add(queueKey, testUserId.toString(), score);
-
-        // 등록 시간 저장 (CallNextService에서 사용)
-        String registeredKey = "queue:booth:" + testBoothId + ":user:" + testUserId;
-        redisTemplate.opsForValue()
-                .set(registeredKey, Instant.now().toString());
+        // 사용자 활성 부스 목록에도 추가
+        String activeBoothsKey = "user:" + testUserId + ":active_booths";
+        redisTemplate.opsForSet().add(activeBoothsKey, testBoothId.toString());
     }
 
     @When("스태프가 다음 사람을 호출한다")
@@ -266,5 +268,13 @@ public class WaitingQueueStepDefinitions {
     @Then("호출된 사용자는 대기 기록으로 저장된다")
     public void waitingIsPersisted() {
         assertThat(waitingJpaRepository.count()).isEqualTo(1);
+    }
+
+    @Then("사용자 활성 부스 목록에서 제거되었다")
+    public void removedFromActiveBooths() {
+        String activeBoothsKey = "user:" + testUserId + ":active_booths";
+        Boolean isMember = redisTemplate.opsForSet()
+                .isMember(activeBoothsKey, testBoothId.toString());
+        assertThat(isMember).isFalse();
     }
 }
