@@ -63,12 +63,35 @@ public class WaitingEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer notificationRetryCount = 0;
 
+    /**
+     * 신규 생성용 생성자 (ID 없음)
+     */
     public WaitingEntity(UserEntity user, BoothEntity booth, Integer calledPosition, LocalDateTime registeredAt, LocalDateTime calledAt) {
         this.user = user;
         this.booth = booth;
         this.calledPosition = calledPosition;
         this.registeredAt = registeredAt;
         this.calledAt = calledAt;
+    }
+
+    /**
+     * 업데이트용 생성자 (ID 포함)
+     * JPA가 ID 유무로 INSERT/UPDATE 판단
+     */
+    public WaitingEntity(Long id, UserEntity user, BoothEntity booth, Integer calledPosition,
+                        WaitingStatus status, CompletionType completionType,
+                        LocalDateTime registeredAt, LocalDateTime calledAt,
+                        LocalDateTime enteredAt, LocalDateTime completedAt) {
+        this.id = id;
+        this.user = user;
+        this.booth = booth;
+        this.calledPosition = calledPosition;
+        this.status = status;
+        this.completionType = completionType;
+        this.registeredAt = registeredAt;
+        this.calledAt = calledAt;
+        this.enteredAt = enteredAt;
+        this.completedAt = completedAt;
     }
 
     public void updateStatus(WaitingStatus status) {
