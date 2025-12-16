@@ -1,5 +1,6 @@
 package com.festin.app.waiting.application.port.in;
 
+import com.festin.app.waiting.application.port.in.result.EntranceResult;
 import com.festin.app.waiting.domain.exception.InvalidStatusException;
 import com.festin.app.waiting.domain.exception.WaitingNotFoundException;
 
@@ -23,8 +24,9 @@ public interface ConfirmEntranceUseCase {
      *
      * @param boothId 부스 ID
      * @param waitingId 대기 ID
+     * @return 입장 확인 결과
      * @throws WaitingNotFoundException 대기 정보 없음
      * @throws InvalidStatusException 잘못된 상태
      */
-    void confirmEntrance(Long boothId, Long waitingId);
+    EntranceResult confirmEntrance(Long boothId, Long waitingId);
 }

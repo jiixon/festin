@@ -38,29 +38,32 @@ public class JpaWaitingAdapter implements WaitingRepositoryPort {
     private final WaitingMapper waitingMapper;
 
     /**
-     * Waiting Aggregate 저장
+     * Waiting Aggregate 저장/업데이트
      *
      * DDD 관점:
      * - Waiting Aggregate는 userId, boothId로 다른 Aggregate 참조 (올바른 설계)
-     * - Adapter(Infrastructure)에서 JPA 연관관계를 위해 UserEntity, BoothEntity 조회
+     * - Adapter(Infrastructure)에서 JPA 연관관계를 위한 Entity 참조만 처리
      * - Domain은 Infrastructure 세부사항을 알지 못함 (Hexagonal Architecture 유지)
+     *
+     * JPA 동작:
+     * - Entity에 ID가 null이면 INSERT
+     * - Entity에 ID가 있으면 UPDATE (merge)
+     * - getReference()로 프록시 생성 (실제 DB 조회 없음)
      */
     @Override
     public Waiting save(Waiting waiting) {
-        // JPA 연관관계를 위해 UserEntity, BoothEntity 조회
-        // 이는 Infrastructure 계층의 책임 (Domain은 알 필요 없음)
-        UserEntity user = userJpaRepository.findById(waiting.getUserId())
-            .orElseThrow(() -> new IllegalArgumentException("User not found: " + waiting.getUserId()));
-        BoothEntity booth = boothJpaRepository.findById(waiting.getBoothId())
-            .orElseThrow(BoothNotFoundException::new);
+        // JPA 연관관계를 위한 Entity 참조 (프록시 사용, DB 조회 X)
+        // Application 계층에서 이미 검증된 ID라고 신뢰
+        UserEntity user = userJpaRepository.getReferenceById(waiting.getUserId());
+        BoothEntity booth = boothJpaRepository.getReferenceById(waiting.getBoothId());
 
-        // Domain → Entity 변환
+        // Domain → Entity 변환 (ID 포함)
         WaitingEntity entity = waitingMapper.toEntity(waiting, user, booth);
 
-        // 영속화
+        // 영속화 (JPA가 ID 유무로 INSERT/UPDATE 판단)
         WaitingEntity savedEntity = waitingJpaRepository.save(entity);
 
-        // Entity → Domain 변환하여 반환 (ID 포함)
+        // Entity → Domain 변환하여 반환
         return waitingMapper.toDomain(savedEntity);
     }
 
