@@ -38,3 +38,22 @@ Feature: Waiting Queue API
     And 호출 결과에 사용자 정보가 포함된다
     And 대기열에서 호출된 사용자는 제거되었다
     And 사용자 활성 부스 목록에서 제거되었다
+
+  Scenario: Successfully confirm entrance after call
+    Given 부스에 대기 중인 사용자가 존재한다
+    And 스태프가 사용자를 호출했다
+    When 스태프가 입장을 확인한다
+    Then 입장 확인이 성공한다
+    And 응답 상태 코드는 200이다
+    And 응답에 입장 확인 정보가 포함된다
+    And 부스 현재 인원이 증가했다
+
+  Scenario: Successfully complete experience after entrance
+    Given 부스에 대기 중인 사용자가 존재한다
+    And 스태프가 사용자를 호출했다
+    And 스태프가 입장을 확인했다
+    When 스태프가 체험 완료 처리한다
+    Then 체험 완료가 성공한다
+    And 응답 상태 코드는 200이다
+    And 응답에 체험 완료 정보가 포함된다
+    And 부스 현재 인원이 감소했다

@@ -49,6 +49,7 @@ public class WaitingQueueStepDefinitions {
     private Long testUserId;
     private WebTestClient.ResponseSpec lastResponse;
     private Map<String, Object> lastResponseBody;
+    private Long lastWaitingId;
 
     @Before
     public void setup() {
@@ -221,6 +222,7 @@ public class WaitingQueueStepDefinitions {
     }
 
     @When("스태프가 다음 사람을 호출한다")
+    @Given("스태프가 사용자를 호출했다")
     public void staffCallsNextUser() {
         Map<String, Object> requestBody = Map.of(
                 "boothId", testBoothId
@@ -236,6 +238,11 @@ public class WaitingQueueStepDefinitions {
                 .expectBody(Map.class)
                 .returnResult()
                 .getResponseBody();
+
+        // waitingId 저장 (입장 확인 시 사용)
+        if (lastResponseBody != null && lastResponseBody.containsKey("waitingId")) {
+            lastWaitingId = ((Number) lastResponseBody.get("waitingId")).longValue();
+        }
     }
 
     @Then("호출이 성공한다")
@@ -276,5 +283,73 @@ public class WaitingQueueStepDefinitions {
         Boolean isMember = redisTemplate.opsForSet()
                 .isMember(activeBoothsKey, testBoothId.toString());
         assertThat(isMember).isFalse();
+    }
+
+    @When("스태프가 입장을 확인한다")
+    @Given("스태프가 입장을 확인했다")
+    public void staffConfirmsEntrance() {
+        lastResponse = webTestClient.post()
+                .uri("/api/v1/booths/" + testBoothId + "/entrance/" + lastWaitingId)
+                .exchange();
+
+        lastResponseBody = lastResponse
+                .expectBody(Map.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    @Then("입장 확인이 성공한다")
+    public void entranceConfirmationIsSuccessful() {
+        assertThat(lastResponseBody).isNotNull();
+    }
+
+    @Then("응답에 입장 확인 정보가 포함된다")
+    public void responseContainsEntranceInfo() {
+        assertThat(lastResponseBody).containsKeys("waitingId", "status", "enteredAt");
+        assertThat(lastResponseBody.get("waitingId")).isEqualTo(lastWaitingId.intValue());
+        assertThat(lastResponseBody.get("status")).isEqualTo("ENTERED");
+        assertThat(lastResponseBody.get("enteredAt")).isNotNull();
+    }
+
+    @Then("부스 현재 인원이 증가했다")
+    public void boothCurrentCountIncreased() {
+        String currentKey = "booth:" + testBoothId + ":current";
+        String currentCount = redisTemplate.opsForValue().get(currentKey);
+        assertThat(currentCount).isNotNull();
+        assertThat(Integer.parseInt(currentCount)).isEqualTo(1);
+    }
+
+    @When("스태프가 체험 완료 처리한다")
+    public void staffCompletesExperience() {
+        lastResponse = webTestClient.post()
+                .uri("/api/v1/booths/" + testBoothId + "/complete/" + lastWaitingId)
+                .exchange();
+
+        lastResponseBody = lastResponse
+                .expectBody(Map.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    @Then("체험 완료가 성공한다")
+    public void experienceCompletionIsSuccessful() {
+        assertThat(lastResponseBody).isNotNull();
+    }
+
+    @Then("응답에 체험 완료 정보가 포함된다")
+    public void responseContainsCompletionInfo() {
+        assertThat(lastResponseBody).containsKeys("waitingId", "status", "completionType", "completedAt");
+        assertThat(lastResponseBody.get("waitingId")).isEqualTo(lastWaitingId.intValue());
+        assertThat(lastResponseBody.get("status")).isEqualTo("COMPLETED");
+        assertThat(lastResponseBody.get("completionType")).isEqualTo("ENTERED");
+        assertThat(lastResponseBody.get("completedAt")).isNotNull();
+    }
+
+    @Then("부스 현재 인원이 감소했다")
+    public void boothCurrentCountDecreased() {
+        String currentKey = "booth:" + testBoothId + ":current";
+        String currentCount = redisTemplate.opsForValue().get(currentKey);
+        assertThat(currentCount).isNotNull();
+        assertThat(Integer.parseInt(currentCount)).isEqualTo(0);
     }
 }
