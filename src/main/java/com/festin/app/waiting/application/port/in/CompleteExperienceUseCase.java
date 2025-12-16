@@ -1,5 +1,6 @@
 package com.festin.app.waiting.application.port.in;
 
+import com.festin.app.waiting.application.port.in.result.CompleteResult;
 import com.festin.app.waiting.domain.exception.InvalidStatusException;
 import com.festin.app.waiting.domain.exception.WaitingNotFoundException;
 
@@ -24,8 +25,9 @@ public interface CompleteExperienceUseCase {
      *
      * @param boothId 부스 ID
      * @param waitingId 대기 ID
+     * @return 체험 완료 결과
      * @throws WaitingNotFoundException 대기 정보 없음
      * @throws InvalidStatusException 잘못된 상태
      */
-    void complete(Long boothId, Long waitingId);
+    CompleteResult complete(Long boothId, Long waitingId);
 }
