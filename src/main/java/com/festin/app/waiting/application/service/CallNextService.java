@@ -24,7 +24,9 @@ import java.time.LocalDateTime;
  * - Redis 대기열에서 1명 dequeue
  * - MySQL에 Waiting 저장 (CALLED 상태)
  * - 푸시 알림 발송
- * - 부스 현재 인원 +1
+ * - 사용자 활성 부스 목록에서 제거
+ *
+ * 참고: 부스 현재 인원(current)은 입장 확인 시점에 +1
  */
 @Service
 @Transactional
@@ -95,9 +97,6 @@ public class CallNextService implements CallNextUseCase {
 
         // DB에 영구 저장
         Waiting savedWaiting = waitingRepositoryPort.save(waiting);
-
-        // 부스 현재 인원 +1
-        boothCachePort.incrementCurrentCount(boothId);
 
         // 푸시 알림 발송
         // TODO: 트랜잭셔널 이벤트(@TransactionalEventListener)로 변경하여 DB 커밋 후 실행
