@@ -22,9 +22,7 @@ public enum ErrorCode {
     WAITING_NOT_FOUND(404, "WAITING_NOT_FOUND", "해당 부스에 대기 중이 아닙니다."),
     QUEUE_EMPTY(404, "QUEUE_EMPTY", "대기 중인 사람이 없습니다."),
 
-    // 409 Conflict
-    ALREADY_REGISTERED(409, "ALREADY_REGISTERED", "이미 해당 부스에 대기 중입니다."),
-    MAX_WAITING_EXCEEDED(409, "MAX_WAITING_EXCEEDED", "최대 2개 부스까지만 대기 가능합니다."),
+    // 409 ConflictMAX_WAITING_EXCEEDED(409, "MAX_WAITING_EXCEEDED", "최대 2개 부스까지만 대기 가능합니다."),
     BOOTH_CLOSED(409, "BOOTH_CLOSED", "부스가 운영 중이 아닙니다."),
     BOOTH_FULL(409, "BOOTH_FULL", "부스 정원이 초과되었습니다."),
 

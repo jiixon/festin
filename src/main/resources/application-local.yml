@@ -1,13 +1,4 @@
-server:
-  port: 8080
-
 spring:
-  application:
-    name: festin
-
-  profiles:
-    active: local
-
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:festin}?createDatabaseIfNotExist=true
     username: ${DB_USER:root}
