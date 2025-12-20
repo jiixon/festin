@@ -1,5 +1,5 @@
 Feature: Health Check and Infrastructure Connectivity
-  Spring Boot 애플리케이션과 모든 인프라(MySQL, Redis, Kafka)가 정상 동작하는지 검증
+  Spring Boot 애플리케이션과 모든 인프라(MySQL, Redis, RabbitMQ)가 정상 동작하는지 검증
 
   Scenario: Health Check API returns ok
     Given 애플리케이션이 실행중이다
@@ -16,7 +16,7 @@ Feature: Health Check and Infrastructure Connectivity
     When Redis에 데이터를 저장하고 조회한다
     Then Redis 연결이 성공한다
 
-  Scenario: Kafka message queue is accessible
+  Scenario: RabbitMQ message queue is accessible
     Given 애플리케이션이 실행중이다
-    When Kafka 연결을 테스트한다
-    Then Kafka가 정상 동작한다
+    When RabbitMQ 연결을 테스트한다
+    Then RabbitMQ가 정상 동작한다

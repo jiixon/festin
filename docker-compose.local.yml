@@ -35,35 +35,22 @@ services:
       retries: 5
     networks:
       - festin-network
-  kafka:
-    image: confluentinc/cp-kafka:7.6.0
-    container_name: festin-kafka
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: festin-rabbitmq
     ports:
-      - "9092:9092"
-      - "9093:9093"
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
     environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      # 외부용 / 내부용 리스너 분리
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,DOCKER://0.0.0.0:19092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,DOCKER://kafka:19092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_LOG_DIRS: /var/lib/kafka/data
-      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     volumes:
-      - kafka-data:/var/lib/kafka/data
+      - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
-      timeout: 10s
+      timeout: 5s
       retries: 5
-      start_period: 30s
     networks:
       - festin-network
 
@@ -77,21 +64,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      kafka:
+      rabbitmq:
         condition: service_healthy
     ports:
       - "8080:8080"
     environment:
       DB_HOST: mysql
       REDIS_HOST: redis
-      KAFKA_HOST: kafka
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
     networks:
       - festin-network
 
 volumes:
   mysql-data:
   redis-data:
-  kafka-data:
+  rabbitmq-data:
 
 networks:
   festin-network:

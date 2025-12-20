@@ -5,8 +5,8 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import javax.sql.DataSource;
@@ -28,10 +28,10 @@ public class HealthCheckStepDefinitions {
     private RedisTemplate<String, String> redisTemplate;
 
     @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private RabbitTemplate rabbitTemplate;
 
     @Autowired
-    private TestKafkaConsumer testKafkaConsumer;
+    private TestRabbitMQConsumer testRabbitMQConsumer;
 
     private Map<String, Object> healthCheckResponse;
     private boolean databaseConnectionSuccess;
@@ -97,22 +97,29 @@ public class HealthCheckStepDefinitions {
         assertThat(cacheConnectionSuccess).isTrue();
     }
 
-    @When("Kafka 연결을 테스트한다")
-    public void iTestKafkaConnection() {
+    @When("RabbitMQ 연결을 테스트한다")
+    public void iTestRabbitMQConnection() {
         try {
-            testKafkaConsumer.reset();
+            testRabbitMQConsumer.reset();
             String testMsg = "test-message-" + UUID.randomUUID();
-            kafkaTemplate.send("test-topic", testMsg).get(5, TimeUnit.SECONDS);
-            testKafkaConsumer.getLatch().await(10, TimeUnit.SECONDS);
+
+            // 큐가 존재하는지 확인하고 없으면 생성
+            rabbitTemplate.execute(channel -> {
+                channel.queueDeclare("test-queue", false, false, false, null);
+                return null;
+            });
+
+            rabbitTemplate.convertAndSend("test-queue", testMsg);
+            testRabbitMQConsumer.getLatch().await(10, TimeUnit.SECONDS);
         } catch (Exception e) {
         }
     }
 
-    @Then("Kafka가 정상 동작한다")
-    public void kafkaShouldWork() {
-        String consumedMessage = testKafkaConsumer.getLastMessage();
+    @Then("RabbitMQ가 정상 동작한다")
+    public void rabbitMQShouldWork() {
+        String consumedMessage = testRabbitMQConsumer.getLastMessage();
         assertThat(consumedMessage)
-                .as("Kafka에서 발행한 메시지를 Consumer가 정상적으로 받아야 합니다")
+                .as("RabbitMQ에서 발행한 메시지를 Consumer가 정상적으로 받아야 합니다")
                 .isNotNull()
                 .startsWith("test-message-");
     }
