@@ -28,5 +28,5 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 # Expose port
 EXPOSE 8080
 
-# Run application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run application with Spring Profile
+ENTRYPOINT ["java", "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-local}", "-jar", "app.jar"]

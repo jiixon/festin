@@ -3,9 +3,12 @@ package com.festin.app.config;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
-import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.RabbitMQContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
+
+import java.time.Duration;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
@@ -24,8 +27,10 @@ public class TestcontainersConfiguration {
     }
 
     @Bean
-    @ServiceConnection(name = "kafka")
-    KafkaContainer kafkaContainer() {
-        return new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.0"));
+    @ServiceConnection
+    RabbitMQContainer rabbitMQContainer() {
+        return new RabbitMQContainer(DockerImageName.parse("rabbitmq:3-management-alpine"))
+                .waitingFor(Wait.forListeningPort())  // 포트 열릴 때까지 대기
+                .withStartupTimeout(Duration.ofMinutes(2));  // 타임아웃 여유있게
     }
 }
