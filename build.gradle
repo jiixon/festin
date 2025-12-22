@@ -58,4 +58,9 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+
+	// CI 환경에서 Testcontainers 활성화
+	if (System.getenv('SPRING_TESTCONTAINERS_ENABLED') == 'true') {
+		systemProperty 'spring.testcontainers.enabled', 'true'
+	}
 }
