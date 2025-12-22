@@ -32,6 +32,8 @@ jobs:
         run: ./gradlew clean build --no-daemon --stacktrace
         env:
           SPRING_TESTCONTAINERS_ENABLED: true
+          TESTCONTAINERS_RYUK_DISABLED: true
+          TESTCONTAINERS_CHECKS_DISABLE: true
 
       - name: Upload test results
         if: always()
