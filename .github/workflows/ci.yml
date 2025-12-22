@@ -32,7 +32,7 @@ jobs:
         run: ./gradlew clean build --no-daemon --stacktrace
         env:
           TESTCONTAINERS_RYUK_DISABLED: true
-          OCKER_HOST: unix:///var/run/docker.sock
+          DOCKER_HOST: unix:///var/run/docker.sock
 
       - name: Upload test results
         if: always()
