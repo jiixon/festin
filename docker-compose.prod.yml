@@ -35,9 +35,7 @@ services:
       - festin-network
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${DOCKER_IMAGE:-festin-app:latest}
     container_name: festin-app
     depends_on:
       redis:
