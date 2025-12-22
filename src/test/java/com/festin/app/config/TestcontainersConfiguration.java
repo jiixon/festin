@@ -25,7 +25,9 @@ public class TestcontainersConfiguration {
     @ServiceConnection(name = "redis")
     org.testcontainers.containers.GenericContainer<?> redisContainer() {
         return new org.testcontainers.containers.GenericContainer<>(DockerImageName.parse("redis:7.0-alpine"))
-                .withExposedPorts(6379);
+                .withExposedPorts(6379)
+                .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1))
+                .withStartupTimeout(Duration.ofMinutes(2));
     }
 
     @Bean
