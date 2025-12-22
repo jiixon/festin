@@ -8,7 +8,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @SpringBootTest
-@Import(TestcontainersConfiguration.class)
 class AppApplicationTests {
 
 	@Test

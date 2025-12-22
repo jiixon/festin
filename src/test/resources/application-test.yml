@@ -28,3 +28,7 @@ spring:
     listener:
       simple:
         missing-queues-fatal: false
+
+  # CI 환경에서 Testcontainers 활성화
+  testcontainers:
+    enabled: ${SPRING_TESTCONTAINERS_ENABLED:false}
