@@ -32,3 +32,9 @@ spring:
   # CI 환경에서 Testcontainers 활성화
   testcontainers:
     enabled: ${SPRING_TESTCONTAINERS_ENABLED:false}
+
+logging:
+  level:
+    org.testcontainers: DEBUG
+    com.github.dockerjava: DEBUG
+    org.springframework.test: DEBUG
