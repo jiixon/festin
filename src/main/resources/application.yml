@@ -4,3 +4,9 @@ server:
 spring:
   application:
     name: festin
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
