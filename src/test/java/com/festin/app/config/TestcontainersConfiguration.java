@@ -52,8 +52,8 @@ public class TestcontainersConfiguration {
         System.out.println("=== RabbitMQ Container Configuration Started ===");
         RabbitMQContainer container = new RabbitMQContainer(DockerImageName.parse("rabbitmq:3-management-alpine"))
                 .withReuse(false)
-                .waitingFor(Wait.forListeningPort())
-                .withStartupTimeout(Duration.ofMinutes(2));
+                .waitingFor(Wait.forLogMessage(".*Server startup complete.*", 1))
+                .withStartupTimeout(Duration.ofMinutes(3));
         System.out.println("=== RabbitMQ Container Configuration Completed ===");
         return container;
     }
