@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * 전역 예외 핸들러
  *
  * 모든 Controller에서 발생하는 예외를 처리하여 표준화된 에러 응답 반환
+ * Actuator 엔드포인트는 제외
  */
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.festin.app")
 public class GlobalExceptionHandler {
 
     /**
