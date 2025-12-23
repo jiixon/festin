@@ -16,9 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * Actuator 엔드포인트는 제외
  */
 @Slf4j
-@RestControllerAdvice(
-        basePackages = "com.festin.app"
-)
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
