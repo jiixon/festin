@@ -28,19 +28,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Check Docker status
-        run: |
-          docker --version
-          docker ps
-          docker info
-
       - name: Build and Test
         run: ./gradlew clean build --no-daemon --stacktrace --info
         env:
           SPRING_TESTCONTAINERS_ENABLED: true
           TESTCONTAINERS_RYUK_DISABLED: true
           TESTCONTAINERS_CHECKS_DISABLE: true
-          DEBUG: testcontainers
 
       - name: Upload test results
         if: always()
