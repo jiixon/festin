@@ -1,4 +1,5 @@
 spring:
+  # 로컬 Docker Compose 설정 (CI에서는 Testcontainers가 override)
   datasource:
     url: jdbc:mysql://localhost:3307/festin?createDatabaseIfNotExist=true
     username: root
@@ -27,3 +28,7 @@ spring:
     listener:
       simple:
         missing-queues-fatal: false
+
+  # CI 환경에서 Testcontainers 활성화
+  testcontainers:
+    enabled: ${SPRING_TESTCONTAINERS_ENABLED:false}

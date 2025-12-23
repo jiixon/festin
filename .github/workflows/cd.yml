@@ -1,0 +1,94 @@
+# CD (Continuous Deployment) 워크플로우
+# - main 브랜치에 push될 때 자동으로 AWS EC2에 배포
+# - Docker Hub에 이미지를 푸시하고, EC2에서 최신 이미지를 pull하여 재시작
+
+name: CD
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Docker Buildx 설정 (멀티 플랫폼 빌드 및 캐싱 지원)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Docker Hub 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 4. Docker 이미지 메타데이터 생성 (태그 및 레이블)
+      # - latest 태그: 항상 최신 버전
+      # - commit SHA 태그: 특정 커밋 버전 (롤백 시 유용)
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/festin
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest
+
+      # 5. Docker 이미지 빌드 및 푸시
+      # - 멀티스테이지 빌드 (Dockerfile 사용)
+      # - 레이어 캐싱으로 빌드 속도 향상
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/festin:latest
+          cache-to: type=inline
+
+      # 6. EC2 서버에 SSH 접속하여 배포
+      # - 최신 이미지 pull
+      # - 기존 컨테이너 중지 및 제거
+      # - 새 이미지로 컨테이너 재시작
+      # - 오래된 이미지 정리
+      # - 헬스체크로 배포 성공 확인
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/festin
+
+            # Set Docker image environment variable
+            export DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/festin:latest
+
+            # Pull latest image
+            docker pull $DOCKER_IMAGE
+
+            # Stop and remove existing containers
+            docker-compose -f docker-compose.prod.yml down app
+
+            # Start with new image
+            docker-compose -f docker-compose.prod.yml up -d app
+
+            # Clean up old images
+            docker image prune -af --filter "until=24h"
+
+            # Health check
+            echo "Waiting for application to be healthy..."
+            sleep 10
+            curl -f http://localhost:8080/actuator/health || exit 1
+
+            echo "Deployment completed successfully!"
