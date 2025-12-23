@@ -26,7 +26,7 @@ public class TestcontainersConfiguration {
         System.out.println("=== MySQL Container Starting ===");
         return new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
                 .withReuse(false)
-                .waitingFor(Wait.forLogMessage(".*ready for connections.*", 1))
+                .waitingFor(Wait.forLogMessage(".*ready for connections.*", 2))
                 .withStartupTimeout(Duration.ofMinutes(3));
     }
 
@@ -37,7 +37,7 @@ public class TestcontainersConfiguration {
         return new GenericContainer<>(DockerImageName.parse("redis:7.0-alpine"))
                 .withExposedPorts(6379)
                 .withReuse(false)
-                .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*", 1))
+                .waitingFor(Wait.forListeningPort())
                 .withStartupTimeout(Duration.ofMinutes(2));
     }
 
