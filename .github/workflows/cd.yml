@@ -77,8 +77,9 @@ jobs:
             # Pull latest image
             docker pull $DOCKER_IMAGE
 
-            # Stop and remove existing containers
-            docker-compose -f docker-compose.prod.yml down app
+            # Stop and remove existing app container
+            docker stop festin-app || true
+            docker rm festin-app || true
 
             # Start with new image
             docker-compose -f docker-compose.prod.yml up -d app
@@ -88,7 +89,7 @@ jobs:
 
             # Health check
             echo "Waiting for application to be healthy..."
-            sleep 10
+            sleep 15
             curl -f http://localhost:8080/actuator/health || exit 1
 
             echo "Deployment completed successfully!"
