@@ -24,7 +24,6 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     MySQLContainer<?> mysqlContainer() {
         MySQLContainer<?> container = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
-                .withReuse(false)
                 .waitingFor(Wait.forLogMessage(".*ready for connections.*", 2))
                 .withStartupTimeout(Duration.ofMinutes(3))
                 .withCommand("--default-authentication-plugin=mysql_native_password");
@@ -36,7 +35,6 @@ public class TestcontainersConfiguration {
     GenericContainer<?> redisContainer() {
         GenericContainer<?> container = new GenericContainer<>(DockerImageName.parse("redis:7.0-alpine"))
                 .withExposedPorts(6379)
-                .withReuse(false)
                 .waitingFor(Wait.forListeningPort())
                 .withStartupTimeout(Duration.ofMinutes(2));
         return container;
@@ -46,7 +44,6 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     RabbitMQContainer rabbitMQContainer() {
         RabbitMQContainer container = new RabbitMQContainer(DockerImageName.parse("rabbitmq:3-management-alpine"))
-                .withReuse(false)
                 .waitingFor(Wait.forLogMessage(".*Server startup complete.*", 1))
                 .withStartupTimeout(Duration.ofMinutes(3));
         return container;
