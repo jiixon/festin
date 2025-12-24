@@ -4,18 +4,22 @@ import com.festin.app.common.dto.ErrorResponse;
 import com.festin.app.common.exception.DomainException;
 import com.festin.app.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * 전역 예외 핸들러
  *
- * com.festin.app 패키지의 Controller에서 발생하는 예외만 처리하여 표준화된 에러 응답 반환
- * Actuator 등 Spring Boot 자체 엔드포인트는 basePackages 제한으로 자동 제외됨
+ * 애플리케이션 Controller에서 발생하는 예외를 처리하여 표준화된 에러 응답 반환
+ * NoResourceFoundException은 Spring Boot가 처리하도록 제외 (Actuator 등)
  */
 @Slf4j
-@RestControllerAdvice(basePackages = "com.festin.app")
+@RestControllerAdvice
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     /**
@@ -41,9 +45,18 @@ public class GlobalExceptionHandler {
      * 예상하지 못한 예외 처리
      *
      * DomainException이 아닌 예외는 500 Internal Server Error로 응답
+     * NoResourceFoundException은 제외 (Spring Boot의 기본 처리 사용)
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception e) {
+    public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception e)
+            throws NoResourceFoundException {
+
+        // NoResourceFoundException은 Spring Boot가 기본 처리하도록 제외
+        // (Actuator, 정적 리소스 등)
+        if (e instanceof NoResourceFoundException) {
+            throw (NoResourceFoundException) e;
+        }
+
         log.error("Unexpected exception occurred", e);
 
         ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR);
