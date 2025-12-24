@@ -15,10 +15,12 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  * 전역 예외 핸들러
  *
  * 애플리케이션 Controller에서 발생하는 예외를 처리하여 표준화된 에러 응답 반환
- * NoResourceFoundException은 Spring Boot가 처리하도록 제외 (Actuator 등)
+ *
+ * TODO: Actuator 문제 해결 후 재활성화 필요
+ *       현재 NoResourceFoundException 처리 문제로 임시 비활성화
  */
 @Slf4j
-@RestControllerAdvice
+//@RestControllerAdvice  // 임시 비활성화 - Actuator 충돌 해결 필요
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
