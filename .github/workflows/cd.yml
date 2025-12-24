@@ -98,7 +98,7 @@ jobs:
 
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
               sleep 2
-              if curl -f http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              if curl -f http://localhost:8080/api/health > /dev/null 2>&1; then
                 echo "✓ Application is healthy!"
                 break
               fi
