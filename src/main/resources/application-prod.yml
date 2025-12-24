@@ -25,7 +25,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info
+      base-path: /actuator
   endpoint:
     health:
       show-details: always
+  health:
+    defaults:
+      enabled: true
