@@ -3,7 +3,6 @@ package com.festin.app.common;
 import com.festin.app.common.dto.ErrorResponse;
 import com.festin.app.common.exception.DomainException;
 import com.festin.app.common.exception.ErrorCode;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,11 +11,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * 전역 예외 핸들러
  *
- * 모든 Controller에서 발생하는 예외를 처리하여 표준화된 에러 응답 반환
- * Actuator 엔드포인트는 제외
+ * com.festin.app 패키지의 Controller에서 발생하는 예외만 처리하여 표준화된 에러 응답 반환
+ * Actuator 등 Spring Boot 자체 엔드포인트는 basePackages 제한으로 자동 제외됨
  */
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.festin.app")
 public class GlobalExceptionHandler {
 
     /**

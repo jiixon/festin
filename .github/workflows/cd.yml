@@ -83,12 +83,12 @@ jobs:
             # Stop and remove existing app container
             docker stop festin-app || true
             docker rm festin-app || true
+            
+             # Clean up old images
+            docker image prune -af --filter "until=24h"
 
             # Start with new image
             docker-compose -f docker-compose.prod.yml up -d app
-
-            # Clean up old images
-            docker image prune -af --filter "until=24h"
 
             # Health check
             echo "Waiting for application to be healthy..."
