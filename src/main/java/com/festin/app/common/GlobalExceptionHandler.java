@@ -14,13 +14,11 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 /**
  * 전역 예외 핸들러
  *
- * 애플리케이션 Controller에서 발생하는 예외를 처리하여 표준화된 에러 응답 반환
- *
- * TODO: Actuator 문제 해결 후 재활성화 필요
- *       현재 NoResourceFoundException 처리 문제로 임시 비활성화
+ * com.festin.app 패키지의 Controller에서 발생하는 예외를 처리하여 표준화된 에러 응답 반환
+ * Actuator 등 Spring Boot 자체 엔드포인트는 제외
  */
 @Slf4j
-//@RestControllerAdvice  // 임시 비활성화 - Actuator 충돌 해결 필요
+@RestControllerAdvice(basePackages = "com.festin.app")
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 

@@ -53,8 +53,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/festin:latest
-          cache-to: type=inline
+          no-cache: true  # 캐시 비활성화 - 소스 변경 강제 반영
+          # cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/festin:latest
+          # cache-to: type=inline
 
       # 6. EC2 서버에 SSH 접속하여 배포
       # - 최신 이미지 pull
