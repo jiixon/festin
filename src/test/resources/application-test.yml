@@ -1,3 +1,6 @@
+jwt:
+  secret: test-secret-key-min-256-bits-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
 spring:
   # 로컬 Docker Compose 설정 (CI에서는 Testcontainers가 override)
   datasource:
