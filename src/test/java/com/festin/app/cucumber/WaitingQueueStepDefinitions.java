@@ -7,6 +7,7 @@ import com.festin.app.university.adapter.out.persistence.entity.UniversityEntity
 import com.festin.app.university.adapter.out.persistence.repository.UniversityJpaRepository;
 import com.festin.app.user.adapter.out.persistence.entity.UserEntity;
 import com.festin.app.user.adapter.out.persistence.repository.UserJpaRepository;
+import com.festin.app.user.domain.model.Role;
 import com.festin.app.waiting.adapter.out.persistence.repository.WaitingJpaRepository;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
@@ -108,8 +109,9 @@ public class WaitingQueueStepDefinitions {
         UserEntity user = new UserEntity(
                 uniqueEmail,
                 "테스트유저",
-                "fD7sXkPqR8u9ZcE4YVw2K3M0B1A6JHnO_LmTQp5iUeRZxC"
+                Role.VISITOR
         );
+        user.updateFcmToken("fD7sXkPqR8u9ZcE4YVw2K3M0B1A6JHnO_LmTQp5iUeRZxC");
         testUserId = userRepository.save(user).getId();
     }
 

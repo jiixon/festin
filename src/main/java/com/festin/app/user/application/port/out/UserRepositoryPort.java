@@ -25,6 +25,14 @@ public interface UserRepositoryPort {
     Optional<User> findById(Long userId);
 
     /**
+     * Email로 User 조회
+     *
+     * @param email 사용자 이메일
+     * @return User 정보
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
      * User 저장
      *
      * @param user 저장할 User

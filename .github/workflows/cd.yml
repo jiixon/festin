@@ -65,10 +65,13 @@ jobs:
       # - 헬스체크로 배포 성공 확인
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: JWT_SECRET
           script: |
             cd ~/festin
 
@@ -84,9 +87,12 @@ jobs:
             # Stop and remove existing app container
             docker stop festin-app || true
             docker rm festin-app || true
-            
+
              # Clean up old images
             docker image prune -af --filter "until=24h"
+
+            # Set JWT_SECRET for docker-compose
+            export JWT_SECRET=$JWT_SECRET
 
             # Start with new image
             docker-compose -f docker-compose.prod.yml up -d app

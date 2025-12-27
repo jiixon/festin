@@ -5,6 +5,9 @@ spring:
   application:
     name: festin
 
+jwt:
+  expiration: 86400000 # 24 hours in milliseconds
+
 management:
   endpoints:
     web:
