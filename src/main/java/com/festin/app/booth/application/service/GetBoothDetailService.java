@@ -7,6 +7,7 @@ import com.festin.app.booth.application.port.out.BoothRepositoryPort;
 import com.festin.app.booth.application.port.out.dto.BoothInfo;
 import com.festin.app.booth.domain.BoothNotFoundException;
 import com.festin.app.waiting.application.port.out.QueueCachePort;
+import com.festin.app.waiting.domain.model.EstimatedWaitTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,14 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * 책임:
  * - BoothInfo + Redis 데이터 조합
- * - 예상 대기 시간 계산
  */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class GetBoothDetailService implements GetBoothDetailUseCase {
-
-    private static final int AVERAGE_EXPERIENCE_TIME_MINUTES = 10;
 
     private final BoothRepositoryPort boothRepositoryPort;
     private final BoothCachePort boothCachePort;
@@ -41,8 +39,8 @@ public class GetBoothDetailService implements GetBoothDetailUseCase {
         // 3. Redis에서 대기 인원 조회
         int totalWaiting = queueCachePort.getQueueSize(boothId);
 
-        // 4. 예상 대기 시간 계산
-        int estimatedWaitTime = calculateEstimatedWaitTime(totalWaiting, boothInfo.capacity());
+        // 4. 예상 대기 시간 계산 (Domain Value Object 사용)
+        EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromWaitingCount(totalWaiting, boothInfo.capacity());
 
         return new BoothDetailResult(
             boothInfo.id(),
@@ -53,28 +51,9 @@ public class GetBoothDetailService implements GetBoothDetailUseCase {
             boothInfo.capacity(),
             currentPeople,
             totalWaiting,
-            estimatedWaitTime,
+            estimatedWaitTime.minutes(),
             boothInfo.openTime(),
             boothInfo.closeTime()
         );
-    }
-
-    /**
-     * 예상 대기 시간 계산
-     *
-     * @param waitingCount 대기 인원
-     * @param capacity     수용 인원
-     * @return 예상 대기 시간 (분)
-     */
-    private int calculateEstimatedWaitTime(int waitingCount, int capacity) {
-        if (waitingCount == 0 || capacity == 0) {
-            return 0;
-        }
-
-        // 필요한 라운드 수 계산 (올림)
-        int rounds = (waitingCount + capacity - 1) / capacity;
-
-        // 각 라운드당 평균 체험 시간 적용
-        return rounds * AVERAGE_EXPERIENCE_TIME_MINUTES;
     }
 }
