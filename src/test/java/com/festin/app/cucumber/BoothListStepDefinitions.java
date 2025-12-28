@@ -1,16 +1,9 @@
 package com.festin.app.cucumber;
 
-import com.festin.app.booth.adapter.in.web.dto.BoothDetailResponse;
 import com.festin.app.booth.adapter.in.web.dto.BoothListResponse;
-import com.festin.app.booth.adapter.out.persistence.entity.BoothEntity;
-import com.festin.app.booth.adapter.out.persistence.repository.BoothJpaRepository;
-import com.festin.app.booth.domain.model.BoothStatus;
-import com.festin.app.university.adapter.out.persistence.entity.UniversityEntity;
-import com.festin.app.university.adapter.out.persistence.repository.UniversityJpaRepository;
 import com.festin.app.user.adapter.out.persistence.entity.UserEntity;
 import com.festin.app.user.adapter.out.persistence.repository.UserJpaRepository;
 import com.festin.app.user.domain.model.Role;
-import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -20,21 +13,18 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * 부스 목록 조회 Step Definitions
+ *
+ * 도메인 특화 When/Then steps만 정의
+ */
 public class BoothListStepDefinitions {
 
     @LocalServerPort
     private int port;
-
-    @Autowired
-    private UniversityJpaRepository universityRepository;
-
-    @Autowired
-    private BoothJpaRepository boothRepository;
 
     @Autowired
     private UserJpaRepository userRepository;
@@ -42,91 +32,12 @@ public class BoothListStepDefinitions {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
-    private WebTestClient webTestClient;
-    private Map<String, Long> universityMap;
-    private Map<String, Long> boothMap;
-    private BoothListResponse boothListResponse;
-    private BoothDetailResponse boothDetailResponse;
-    private WebTestClient.ResponseSpec errorResponse;
-
-    @Before
-    public void setup() {
-        boothRepository.deleteAll();
-        universityRepository.deleteAll();
-        userRepository.deleteAll();
-
-        webTestClient = WebTestClient
-                .bindToServer()
-                .baseUrl("http://localhost:" + port)
-                .build();
-
-        redisTemplate.getConnectionFactory()
-                .getConnection()
-                .flushAll();
-
-        universityMap = new HashMap<>();
-        boothMap = new HashMap<>();
-    }
-
-    @And("테스트용 대학교 {string}가 존재한다")
-    public void testUniversityExists(String universityName) {
-        if (!universityMap.containsKey(universityName)) {
-            String uniqueDomain = universityName + "-" + System.currentTimeMillis();
-            UniversityEntity university = new UniversityEntity(universityName, uniqueDomain);
-            Long universityId = universityRepository.save(university).getId();
-            universityMap.put(universityName, universityId);
-        }
-    }
-
-    @And("{string}에 {string} 부스가 존재한다")
-    public void boothExistsInUniversity(String universityName, String boothName) {
-        UniversityEntity university = universityRepository.findById(universityMap.get(universityName))
-                .orElseThrow();
-
-        BoothEntity booth = new BoothEntity(
-                university,
-                boothName,
-                boothName + " 설명",
-                10,
-                BoothStatus.OPEN
-        );
-
-        Long boothId = boothRepository.save(booth).getId();
-        boothMap.put(boothName, boothId);
-
-        // Redis에 부스 메타 정보 저장
-        String metaKey = "booth:" + boothId + ":meta";
-        redisTemplate.opsForHash().put(metaKey, "status", "OPEN");
-        redisTemplate.opsForHash().put(metaKey, "name", boothName);
-        redisTemplate.opsForHash().put(metaKey, "capacity", "10");
-    }
-
-    @And("{string}에 정원 {int}명인 {string} 부스가 존재한다")
-    public void boothWithCapacityExistsInUniversity(String universityName, int capacity, String boothName) {
-        UniversityEntity university = universityRepository.findById(universityMap.get(universityName))
-                .orElseThrow();
-
-        BoothEntity booth = new BoothEntity(
-                university,
-                boothName,
-                boothName + " 설명",
-                capacity,
-                BoothStatus.OPEN
-        );
-
-        Long boothId = boothRepository.save(booth).getId();
-        boothMap.put(boothName, boothId);
-
-        // Redis에 부스 메타 정보 저장
-        String metaKey = "booth:" + boothId + ":meta";
-        redisTemplate.opsForHash().put(metaKey, "status", "OPEN");
-        redisTemplate.opsForHash().put(metaKey, "name", boothName);
-        redisTemplate.opsForHash().put(metaKey, "capacity", String.valueOf(capacity));
-    }
+    @Autowired
+    private TestContext testContext;
 
     @And("{string}에 {int}명의 대기자가 있다")
     public void waitingUsersExistInBooth(String boothName, int waitingCount) {
-        Long boothId = boothMap.get(boothName);
+        Long boothId = testContext.getBoothMap().get(boothName);
         String queueKey = "queue:booth:" + boothId;
 
         // Redis Sorted Set에 대기자 추가
@@ -143,20 +54,30 @@ public class BoothListStepDefinitions {
 
     @When("전체 부스 목록을 조회한다")
     public void getBoothList() {
-        boothListResponse = webTestClient.get()
+        WebTestClient webTestClient = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+
+        BoothListResponse response = webTestClient.get()
                 .uri("/api/v1/booths")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(BoothListResponse.class)
                 .returnResult()
                 .getResponseBody();
+
+        testContext.setBoothListResponse(response);
     }
 
     @When("{string}의 부스 목록을 조회한다")
     public void getBoothListByUniversity(String universityName) {
-        Long universityId = universityMap.get(universityName);
+        WebTestClient webTestClient = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
 
-        boothListResponse = webTestClient.get()
+        Long universityId = testContext.getUniversityMap().get(universityName);
+
+        BoothListResponse response = webTestClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/v1/booths")
                         .queryParam("universityId", universityId)
@@ -166,23 +87,25 @@ public class BoothListStepDefinitions {
                 .expectBody(BoothListResponse.class)
                 .returnResult()
                 .getResponseBody();
+
+        testContext.setBoothListResponse(response);
     }
 
     @Then("응답에 {int}개의 부스가 포함된다")
     public void responseContainsBooths(int expectedCount) {
-        assertThat(boothListResponse.booths()).hasSize(expectedCount);
+        assertThat(testContext.getBoothListResponse().booths()).hasSize(expectedCount);
     }
 
     @And("부스 목록에 {string}가 포함된다")
     public void boothListContainsBooth(String boothName) {
-        boolean exists = boothListResponse.booths().stream()
+        boolean exists = testContext.getBoothListResponse().booths().stream()
                 .anyMatch(booth -> booth.boothName().equals(boothName));
         assertThat(exists).isTrue();
     }
 
     @Then("{string}의 대기 인원은 {int}명이다")
     public void boothHasWaitingCount(String boothName, int expectedWaiting) {
-        BoothListResponse.BoothItem booth = boothListResponse.booths().stream()
+        BoothListResponse.BoothItem booth = testContext.getBoothListResponse().booths().stream()
                 .filter(b -> b.boothName().equals(boothName))
                 .findFirst()
                 .orElseThrow();
@@ -192,77 +115,11 @@ public class BoothListStepDefinitions {
 
     @And("{string}의 예상 대기 시간은 {int}분이다")
     public void boothHasEstimatedWaitTime(String boothName, int expectedTime) {
-        BoothListResponse.BoothItem booth = boothListResponse.booths().stream()
+        BoothListResponse.BoothItem booth = testContext.getBoothListResponse().booths().stream()
                 .filter(b -> b.boothName().equals(boothName))
                 .findFirst()
                 .orElseThrow();
 
         assertThat(booth.estimatedWaitTime()).isEqualTo(expectedTime);
-    }
-
-    // ===== 부스 상세 조회 =====
-
-    @And("{string}에 {int}명이 입장했다")
-    public void peopleEnteredBooth(String boothName, int enteredCount) {
-        Long boothId = boothMap.get(boothName);
-        String currentKey = "booth:" + boothId + ":current";
-
-        // Redis에 현재 입장 인원 저장
-        redisTemplate.opsForValue().set(currentKey, String.valueOf(enteredCount));
-    }
-
-    @When("{string}의 상세 정보를 조회한다")
-    public void getBoothDetail(String boothName) {
-        Long boothId = boothMap.get(boothName);
-
-        boothDetailResponse = webTestClient.get()
-                .uri("/api/v1/booths/" + boothId)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(BoothDetailResponse.class)
-                .returnResult()
-                .getResponseBody();
-    }
-
-    @When("존재하지 않는 부스\\(ID: {long})를 조회한다")
-    public void getNonExistentBooth(Long boothId) {
-        errorResponse = webTestClient.get()
-                .uri("/api/v1/booths/" + boothId)
-                .exchange();
-    }
-
-    @Then("부스 이름은 {string}이다")
-    public void boothNameIs(String expectedName) {
-        assertThat(boothDetailResponse.boothName()).isEqualTo(expectedName);
-    }
-
-    @And("부스 대학은 {string}이다")
-    public void boothUniversityIs(String expectedUniversityName) {
-        assertThat(boothDetailResponse.universityName()).isEqualTo(expectedUniversityName);
-    }
-
-    @And("부스 정원은 {int}명이다")
-    public void boothCapacityIs(int expectedCapacity) {
-        assertThat(boothDetailResponse.capacity()).isEqualTo(expectedCapacity);
-    }
-
-    @And("현재 입장 인원은 {int}명이다")
-    public void currentPeopleIs(int expectedCurrent) {
-        assertThat(boothDetailResponse.currentPeople()).isEqualTo(expectedCurrent);
-    }
-
-    @And("대기 인원은 {int}명이다")
-    public void totalWaitingIs(int expectedWaiting) {
-        assertThat(boothDetailResponse.totalWaiting()).isEqualTo(expectedWaiting);
-    }
-
-    @And("예상 대기 시간은 {int}분이다")
-    public void estimatedWaitTimeIsDetail(int expectedTime) {
-        assertThat(boothDetailResponse.estimatedWaitTime()).isEqualTo(expectedTime);
-    }
-
-    @Then("에러 응답이 반환된다")
-    public void errorResponseReturned() {
-        errorResponse.expectStatus().is4xxClientError();
     }
 }

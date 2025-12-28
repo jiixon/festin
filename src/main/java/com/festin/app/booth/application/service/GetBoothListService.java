@@ -5,6 +5,7 @@ import com.festin.app.booth.application.port.in.dto.BoothListResult;
 import com.festin.app.booth.application.port.out.BoothRepositoryPort;
 import com.festin.app.booth.application.port.out.dto.BoothInfo;
 import com.festin.app.waiting.application.port.out.QueueCachePort;
+import com.festin.app.waiting.domain.model.EstimatedWaitTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +18,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class GetBoothListService implements GetBoothListUseCase {
-
-    private static final int AVERAGE_EXPERIENCE_TIME_MINUTES = 5;
 
     private final BoothRepositoryPort boothRepositoryPort;
     private final QueueCachePort queueCachePort;
@@ -42,8 +41,8 @@ public class GetBoothListService implements GetBoothListUseCase {
         // Redis에서 현재 대기 인원 조회
         int currentWaiting = queueCachePort.getQueueSize(info.id());
 
-        // 예상 대기 시간 계산 (분 단위)
-        int estimatedWaitTime = calculateEstimatedWaitTime(currentWaiting, info.capacity());
+        // 예상 대기 시간 계산 (Domain Value Object 사용)
+        EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromWaitingCount(currentWaiting, info.capacity());
 
         return new BoothListResult.BoothItem(
                 info.id(),
@@ -53,25 +52,7 @@ public class GetBoothListService implements GetBoothListUseCase {
                 info.status(),
                 info.capacity(),
                 currentWaiting,
-                estimatedWaitTime
+                estimatedWaitTime.minutes()
         );
-    }
-
-    /**
-     * 예상 대기 시간 계산
-     *
-     * 계산 로직:
-     * - 한 번에 수용 가능한 인원: capacity
-     * - 평균 체험 시간: 5분
-     * - 예상 대기 시간 = (대기 인원 / 정원) * 평균 체험 시간
-     */
-    private int calculateEstimatedWaitTime(int waitingCount, int capacity) {
-        if (waitingCount == 0 || capacity == 0) {
-            return 0;
-        }
-
-        // 올림 처리: (waitingCount + capacity - 1) / capacity
-        int rounds = (waitingCount + capacity - 1) / capacity;
-        return rounds * AVERAGE_EXPERIENCE_TIME_MINUTES;
     }
 }

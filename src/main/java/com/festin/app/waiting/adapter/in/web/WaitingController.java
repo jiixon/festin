@@ -4,14 +4,17 @@ import com.festin.app.waiting.adapter.in.web.dto.CallNextRequest;
 import com.festin.app.waiting.adapter.in.web.dto.CallNextResponse;
 import com.festin.app.waiting.adapter.in.web.dto.EnqueueRequest;
 import com.festin.app.waiting.adapter.in.web.dto.EnqueueResponse;
+import com.festin.app.waiting.adapter.in.web.dto.MyWaitingListResponse;
 import com.festin.app.waiting.adapter.in.web.dto.PositionResponse;
 import com.festin.app.waiting.application.port.in.CallNextUseCase;
 import com.festin.app.waiting.application.port.in.CancelWaitingUseCase;
 import com.festin.app.waiting.application.port.in.EnqueueUseCase;
+import com.festin.app.waiting.application.port.in.GetMyWaitingListUseCase;
 import com.festin.app.waiting.application.port.in.GetPositionUseCase;
 import com.festin.app.waiting.application.port.in.command.EnqueueCommand;
 import com.festin.app.waiting.application.port.in.result.CallResult;
 import com.festin.app.waiting.application.port.in.result.EnqueueResult;
+import com.festin.app.waiting.application.port.in.result.MyWaitingListResult;
 import com.festin.app.waiting.application.port.in.result.PositionResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
  *
  * API 스펙:
  * - POST /api/v1/waitings - 대기 등록
+ * - GET /api/v1/waitings/my - 내 대기 목록 조회
  * - GET /api/v1/waitings/booth/{boothId} - 순번 조회
  * - DELETE /api/v1/waitings/{boothId} - 대기 취소
  * - POST /api/v1/waitings/call - 다음 사람 호출 (스태프 전용)
@@ -33,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
 public class WaitingController {
 
     private final EnqueueUseCase enqueueUseCase;
+    private final GetMyWaitingListUseCase getMyWaitingListUseCase;
     private final GetPositionUseCase getPositionUseCase;
     private final CancelWaitingUseCase cancelWaitingUseCase;
     private final CallNextUseCase callNextUseCase;
@@ -57,6 +62,23 @@ public class WaitingController {
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(EnqueueResponse.from(result));
+    }
+
+    /**
+     * 내 대기 목록 조회
+     *
+     * GET /api/v1/waitings/my
+     *
+     * @param userId 사용자 ID (임시로 헤더로 받음, 추후 JWT 인증으로 대체)
+     * @return 200 OK - 내 대기 목록
+     */
+    @GetMapping("/my")
+    public ResponseEntity<MyWaitingListResponse> getMyWaitingList(
+        @RequestHeader("X-User-Id") Long userId
+    ) {
+        MyWaitingListResult result = getMyWaitingListUseCase.getMyWaitingList(userId);
+
+        return ResponseEntity.ok(MyWaitingListResponse.from(result));
     }
 
     /**

@@ -9,6 +9,7 @@ import com.festin.app.booth.domain.model.Booth;
 import com.festin.app.booth.domain.model.BoothStatus;
 import com.festin.app.waiting.application.port.out.QueueCachePort;
 import com.festin.app.waiting.domain.exception.QueueOperationException;
+import com.festin.app.waiting.domain.model.EstimatedWaitTime;
 import com.festin.app.waiting.domain.policy.MaxWaitingPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -67,7 +68,7 @@ public class EnqueueService implements EnqueueUseCase {
         if (existingPosition != null) {
             // 이미 등록되어 있음 - 현재 정보 반환 (멱등성 보장)
             int totalWaiting = queueCachePort.getQueueSize(boothId);
-            int estimatedWaitTime = calculateEstimatedWaitTime(existingPosition);
+            EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromPosition(existingPosition);
 
             // Redis Score에서 원래 등록 시간 조회
             LocalDateTime registeredAt = queueCachePort.getRegisteredAt(boothId, userId)
@@ -78,7 +79,7 @@ public class EnqueueService implements EnqueueUseCase {
                 booth.getName(),
                 existingPosition,
                 totalWaiting,
-                estimatedWaitTime,
+                estimatedWaitTime.minutes(),
                 registeredAt
             );
         }
@@ -100,28 +101,15 @@ public class EnqueueService implements EnqueueUseCase {
         int totalWaiting = queueCachePort.getQueueSize(boothId);
 
         // 예상 대기 시간 계산
-        int estimatedWaitTime = calculateEstimatedWaitTime(position);
+        EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromPosition(position);
 
         return new EnqueueResult(
             boothId,
             booth.getName(),
             position,
             totalWaiting,
-            estimatedWaitTime,
+            estimatedWaitTime.minutes(),
             now
         );
-    }
-
-    /**
-     * 예상 대기 시간 계산
-     *
-     * @param position 현재 순번
-     * @return 예상 대기 시간 (분)
-     */
-    private int calculateEstimatedWaitTime(int position) {
-        // 평균 체험 시간 20분 기준
-        // TODO: 향후 부스별 평균 시간을 Redis에서 조회하도록 개선
-        int avgTimePerPerson = 20;
-        return (position - 1) * avgTimePerPerson;
     }
 }

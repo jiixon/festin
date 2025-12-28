@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Redis Queue Adapter
@@ -37,18 +38,25 @@ public class RedisQueueAdapter implements QueueCachePort {
     }
 
     @Override
-    public Optional<Long> dequeue(Long boothId) {
+    public Optional<QueueItem> dequeue(Long boothId) {
         String key = QUEUE_KEY_PREFIX + boothId;
 
-        // 가장 낮은 score (가장 먼저 등록한 사람) 가져오고 제거
+        // ZPOPMIN: 가장 낮은 score (가장 먼저 등록한 사람)를 원자적으로 가져오고 제거
         ZSetOperations.TypedTuple<String> tuple = redisTemplate.opsForZSet()
             .popMin(key);
 
-        if (tuple == null || tuple.getValue() == null) {
+        if (tuple == null || tuple.getValue() == null || tuple.getScore() == null) {
             return Optional.empty();
         }
 
-        return Optional.of(Long.parseLong(tuple.getValue()));
+        Long userId = Long.parseLong(tuple.getValue());
+        LocalDateTime registeredAt = LocalDateTime.ofEpochSecond(
+                tuple.getScore().longValue(),
+                0,
+                ZoneOffset.UTC
+        );
+
+        return Optional.of(new QueueItem(userId, registeredAt));
     }
 
     @Override
@@ -116,5 +124,20 @@ public class RedisQueueAdapter implements QueueCachePort {
         String key = USER_ACTIVE_BOOTHS_KEY_PREFIX + userId + USER_ACTIVE_BOOTHS_KEY_SUFFIX;
 
         redisTemplate.opsForSet().remove(key, boothId.toString());
+    }
+
+    @Override
+    public Set<Long> getUserActiveBooths(Long userId) {
+        String key = USER_ACTIVE_BOOTHS_KEY_PREFIX + userId + USER_ACTIVE_BOOTHS_KEY_SUFFIX;
+
+        Set<String> boothIdStrings = redisTemplate.opsForSet().members(key);
+
+        if (boothIdStrings == null || boothIdStrings.isEmpty()) {
+            return Set.of();
+        }
+
+        return boothIdStrings.stream()
+                .map(Long::parseLong)
+                .collect(java.util.stream.Collectors.toSet());
     }
 }
