@@ -1,6 +1,5 @@
 package com.festin.app.cucumber;
 
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,11 +35,6 @@ public class HealthCheckStepDefinitions {
     private Map<String, Object> healthCheckResponse;
     private boolean databaseConnectionSuccess;
     private boolean cacheConnectionSuccess;
-
-    @Given("애플리케이션이 실행중이다")
-    public void theApplicationIsRunning() {
-        // Spring Boot 테스트가 이미 실행중이므로 별도 작업 불필요
-    }
 
     @When("{string} 엔드포인트를 호출한다")
     public void iCallTheHealthEndpoint(String endpoint) {

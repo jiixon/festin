@@ -1,0 +1,80 @@
+package com.festin.app.cucumber;
+
+import com.festin.app.booth.adapter.in.web.dto.BoothDetailResponse;
+import com.festin.app.booth.adapter.in.web.dto.BoothListResponse;
+import com.festin.app.waiting.adapter.in.web.dto.MyWaitingListResponse;
+import io.cucumber.spring.ScenarioScope;
+import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Cucumber 시나리오 간 상태를 공유하는 컨텍스트
+ *
+ * @ScenarioScope: 각 시나리오마다 새로운 인스턴스 생성
+ */
+@Component
+@ScenarioScope
+public class TestContext {
+
+    // Entity ID 저장소
+    private final Map<String, Long> userMap = new HashMap<>();
+    private final Map<String, Long> universityMap = new HashMap<>();
+    private final Map<String, Long> boothMap = new HashMap<>();
+
+    // API 응답 저장소
+    private BoothListResponse boothListResponse;
+    private BoothDetailResponse boothDetailResponse;
+    private MyWaitingListResponse myWaitingListResponse;
+
+    // Map Getters (캡슐화를 유지하면서 Map 접근 허용)
+    public Map<String, Long> getUserMap() {
+        return userMap;
+    }
+
+    public Map<String, Long> getUniversityMap() {
+        return universityMap;
+    }
+
+    public Map<String, Long> getBoothMap() {
+        return boothMap;
+    }
+
+    // Booth List Response
+    public void setBoothListResponse(BoothListResponse response) {
+        this.boothListResponse = response;
+    }
+
+    public BoothListResponse getBoothListResponse() {
+        return boothListResponse;
+    }
+
+    // Booth Detail Response
+    public void setBoothDetailResponse(BoothDetailResponse response) {
+        this.boothDetailResponse = response;
+    }
+
+    public BoothDetailResponse getBoothDetailResponse() {
+        return boothDetailResponse;
+    }
+
+    // My Waiting List Response
+    public void setMyWaitingListResponse(MyWaitingListResponse response) {
+        this.myWaitingListResponse = response;
+    }
+
+    public MyWaitingListResponse getMyWaitingListResponse() {
+        return myWaitingListResponse;
+    }
+
+    // Clear All
+    public void clearAll() {
+        userMap.clear();
+        universityMap.clear();
+        boothMap.clear();
+        boothListResponse = null;
+        boothDetailResponse = null;
+        myWaitingListResponse = null;
+    }
+}
