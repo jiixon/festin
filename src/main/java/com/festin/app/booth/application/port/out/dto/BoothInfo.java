@@ -2,6 +2,8 @@ package com.festin.app.booth.application.port.out.dto;
 
 import com.festin.app.booth.domain.model.BoothStatus;
 
+import java.time.LocalTime;
+
 /**
  * Booth Read Model
  *
@@ -16,6 +18,8 @@ public record BoothInfo(
         Long universityId,
         String universityName,
         int capacity,
-        BoothStatus status
+        BoothStatus status,
+        LocalTime openTime,
+        LocalTime closeTime
 ) {
 }

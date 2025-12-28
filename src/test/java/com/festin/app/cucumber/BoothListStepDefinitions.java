@@ -1,5 +1,6 @@
 package com.festin.app.cucumber;
 
+import com.festin.app.booth.adapter.in.web.dto.BoothDetailResponse;
 import com.festin.app.booth.adapter.in.web.dto.BoothListResponse;
 import com.festin.app.booth.adapter.out.persistence.entity.BoothEntity;
 import com.festin.app.booth.adapter.out.persistence.repository.BoothJpaRepository;
@@ -45,6 +46,8 @@ public class BoothListStepDefinitions {
     private Map<String, Long> universityMap;
     private Map<String, Long> boothMap;
     private BoothListResponse boothListResponse;
+    private BoothDetailResponse boothDetailResponse;
+    private WebTestClient.ResponseSpec errorResponse;
 
     @Before
     public void setup() {
@@ -195,5 +198,71 @@ public class BoothListStepDefinitions {
                 .orElseThrow();
 
         assertThat(booth.estimatedWaitTime()).isEqualTo(expectedTime);
+    }
+
+    // ===== 부스 상세 조회 =====
+
+    @And("{string}에 {int}명이 입장했다")
+    public void peopleEnteredBooth(String boothName, int enteredCount) {
+        Long boothId = boothMap.get(boothName);
+        String currentKey = "booth:" + boothId + ":current";
+
+        // Redis에 현재 입장 인원 저장
+        redisTemplate.opsForValue().set(currentKey, String.valueOf(enteredCount));
+    }
+
+    @When("{string}의 상세 정보를 조회한다")
+    public void getBoothDetail(String boothName) {
+        Long boothId = boothMap.get(boothName);
+
+        boothDetailResponse = webTestClient.get()
+                .uri("/api/v1/booths/" + boothId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(BoothDetailResponse.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    @When("존재하지 않는 부스\\(ID: {long})를 조회한다")
+    public void getNonExistentBooth(Long boothId) {
+        errorResponse = webTestClient.get()
+                .uri("/api/v1/booths/" + boothId)
+                .exchange();
+    }
+
+    @Then("부스 이름은 {string}이다")
+    public void boothNameIs(String expectedName) {
+        assertThat(boothDetailResponse.boothName()).isEqualTo(expectedName);
+    }
+
+    @And("부스 대학은 {string}이다")
+    public void boothUniversityIs(String expectedUniversityName) {
+        assertThat(boothDetailResponse.universityName()).isEqualTo(expectedUniversityName);
+    }
+
+    @And("부스 정원은 {int}명이다")
+    public void boothCapacityIs(int expectedCapacity) {
+        assertThat(boothDetailResponse.capacity()).isEqualTo(expectedCapacity);
+    }
+
+    @And("현재 입장 인원은 {int}명이다")
+    public void currentPeopleIs(int expectedCurrent) {
+        assertThat(boothDetailResponse.currentPeople()).isEqualTo(expectedCurrent);
+    }
+
+    @And("대기 인원은 {int}명이다")
+    public void totalWaitingIs(int expectedWaiting) {
+        assertThat(boothDetailResponse.totalWaiting()).isEqualTo(expectedWaiting);
+    }
+
+    @And("예상 대기 시간은 {int}분이다")
+    public void estimatedWaitTimeIsDetail(int expectedTime) {
+        assertThat(boothDetailResponse.estimatedWaitTime()).isEqualTo(expectedTime);
+    }
+
+    @Then("에러 응답이 반환된다")
+    public void errorResponseReturned() {
+        errorResponse.expectStatus().is4xxClientError();
     }
 }
