@@ -32,22 +32,113 @@ public class Waiting {
     private LocalDateTime enteredAt;           // 입장 확인 시간
     private LocalDateTime completedAt;         // 완료 시간
 
-    // private 생성자: Builder를 통해서만 객체 생성 가능
-    private Waiting(Builder builder) {
-        this.id = builder.id;
-        this.userId = builder.userId;
-        this.boothId = builder.boothId;
-        this.calledPosition = builder.calledPosition;
-        this.registeredAt = builder.registeredAt;
-        this.calledAt = builder.calledAt;
-        this.status = builder.status;
-        this.completionType = builder.completionType;
-        this.enteredAt = builder.enteredAt;
-        this.completedAt = builder.completedAt;
+    // private 생성자: 정적 팩토리 메서드를 통해서만 객체 생성 가능
+    private Waiting(
+            Long id,
+            Long userId,
+            Long boothId,
+            Integer calledPosition,
+            LocalDateTime registeredAt,
+            LocalDateTime calledAt,
+            WaitingStatus status,
+            CompletionType completionType,
+            LocalDateTime enteredAt,
+            LocalDateTime completedAt
+    ) {
+        this.id = id;
+        this.userId = userId;
+        this.boothId = boothId;
+        this.calledPosition = calledPosition;
+        this.registeredAt = registeredAt;
+        this.calledAt = calledAt;
+        this.status = status;
+        this.completionType = completionType;
+        this.enteredAt = enteredAt;
+        this.completedAt = completedAt;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    /**
+     * Waiting 생성
+     *
+     * 용도:
+     * - WaitingMapper에서 Entity → Domain 변환 시 사용
+     * - 모든 필드를 포함하여 완전한 Waiting 객체 생성
+     *
+     * @param id Waiting ID
+     * @param userId 사용자 ID
+     * @param boothId 부스 ID
+     * @param calledPosition 호출 순번
+     * @param registeredAt 등록 시간
+     * @param calledAt 호출 시간
+     * @param status 상태
+     * @param completionType 완료 유형
+     * @param enteredAt 입장 시간
+     * @param completedAt 완료 시간
+     * @return Waiting 도메인 객체
+     */
+    public static Waiting of(
+            Long id,
+            Long userId,
+            Long boothId,
+            Integer calledPosition,
+            LocalDateTime registeredAt,
+            LocalDateTime calledAt,
+            WaitingStatus status,
+            CompletionType completionType,
+            LocalDateTime enteredAt,
+            LocalDateTime completedAt
+    ) {
+        return new Waiting(
+                id,
+                userId,
+                boothId,
+                calledPosition,
+                registeredAt,
+                calledAt,
+                status,
+                completionType,
+                enteredAt,
+                completedAt
+        );
+    }
+
+    /**
+     * 호출된 Waiting 생성
+     *
+     * 비즈니스 의미:
+     * - 대기열에서 호출되어 MySQL에 저장할 Waiting 생성
+     * - 상태는 항상 CALLED
+     * - ID는 null (영속화 시점에 생성됨)
+     *
+     * 용도:
+     * - CallNextService에서 새로운 호출 시 사용
+     *
+     * @param userId 사용자 ID
+     * @param boothId 부스 ID
+     * @param calledPosition 호출 순번
+     * @param registeredAt 등록 시간 (Redis에서 가져온 원본 등록 시간)
+     * @param calledAt 호출 시간
+     * @return CALLED 상태의 Waiting 도메인 객체
+     */
+    public static Waiting ofCalled(
+            Long userId,
+            Long boothId,
+            Integer calledPosition,
+            LocalDateTime registeredAt,
+            LocalDateTime calledAt
+    ) {
+        return new Waiting(
+                null,  // id는 영속화 시점에 생성됨
+                userId,
+                boothId,
+                calledPosition,
+                registeredAt,
+                calledAt,
+                WaitingStatus.CALLED,
+                null,  // completionType은 나중에 설정
+                null,  // enteredAt은 나중에 설정
+                null   // completedAt은 나중에 설정
+        );
     }
 
     /**
@@ -138,72 +229,5 @@ public class Waiting {
 
     public LocalDateTime getCompletedAt() {
         return completedAt;
-    }
-
-    public static class Builder {
-        private Long id;
-        private Long userId;
-        private Long boothId;
-        private Integer calledPosition;
-        private LocalDateTime registeredAt;
-        private LocalDateTime calledAt;
-        private WaitingStatus status = WaitingStatus.CALLED;
-        private CompletionType completionType;
-        private LocalDateTime enteredAt;
-        private LocalDateTime completedAt;
-
-        public Builder id(Long id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder userId(Long userId) {
-            this.userId = userId;
-            return this;
-        }
-
-        public Builder boothId(Long boothId) {
-            this.boothId = boothId;
-            return this;
-        }
-
-        public Builder calledPosition(Integer calledPosition) {
-            this.calledPosition = calledPosition;
-            return this;
-        }
-
-        public Builder registeredAt(LocalDateTime registeredAt) {
-            this.registeredAt = registeredAt;
-            return this;
-        }
-
-        public Builder calledAt(LocalDateTime calledAt) {
-            this.calledAt = calledAt;
-            return this;
-        }
-
-        public Builder status(WaitingStatus status) {
-            this.status = status;
-            return this;
-        }
-
-        public Builder completionType(CompletionType completionType) {
-            this.completionType = completionType;
-            return this;
-        }
-
-        public Builder enteredAt(LocalDateTime enteredAt) {
-            this.enteredAt = enteredAt;
-            return this;
-        }
-
-        public Builder completedAt(LocalDateTime completedAt) {
-            this.completedAt = completedAt;
-            return this;
-        }
-
-        public Waiting build() {
-            return new Waiting(this);
-        }
     }
 }

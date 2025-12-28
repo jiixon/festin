@@ -71,29 +71,28 @@ public class CallNextService implements CallNextUseCase {
         int currentCount = boothCachePort.getCurrentCount(boothId);
         booth.validateForCalling(currentCount);
 
-        // Redis 대기열에서 다음 사용자 dequeue
-        Long userId = queueCachePort.dequeue(boothId)
+        // Redis 대기열에서 다음 사용자 dequeue (userId와 registeredAt을 함께 반환)
+        QueueCachePort.QueueItem queueItem = queueCachePort.dequeue(boothId)
                 .orElseThrow(QueueEmptyException::new);
+
+        Long userId = queueItem.userId();
+        LocalDateTime registeredAt = queueItem.registeredAt();
 
         // 사용자 활성 부스 목록에서 제거 (호출되었으므로 대기 상태 종료)
         queueCachePort.removeUserActiveBooth(userId, boothId);
 
-        // 호출 순번 계산 (dequeue 전 위치)
-        int calledPosition = 1; // dequeue되었으므로 1번으로 호출됨
-
-        // 대기 등록 시간 조회 (Redis에서)
-        LocalDateTime registeredAt = queueCachePort.getRegisteredAt(boothId, userId)
-                .orElse(LocalDateTime.now()); // fallback
+        // 호출 순번 계산 (dequeue되었으므로 1번으로 호출됨)
+        int calledPosition = 1;
 
         // Waiting 도메인 생성 (CALLED 상태)
         LocalDateTime calledAt = LocalDateTime.now();
-        Waiting waiting = Waiting.builder()
-                .userId(userId)
-                .boothId(boothId)
-                .calledPosition(calledPosition)
-                .registeredAt(registeredAt)
-                .calledAt(calledAt)
-                .build();
+        Waiting waiting = Waiting.ofCalled(
+                userId,
+                boothId,
+                calledPosition,
+                registeredAt,
+                calledAt
+        );
 
         // DB에 영구 저장
         Waiting savedWaiting = waitingRepositoryPort.save(waiting);

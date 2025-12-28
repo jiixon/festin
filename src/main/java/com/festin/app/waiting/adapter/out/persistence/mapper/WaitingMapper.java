@@ -18,18 +18,18 @@ public class WaitingMapper {
      * Entity → Domain
      */
     public Waiting toDomain(WaitingEntity entity) {
-        return Waiting.builder()
-            .id(entity.getId())
-            .userId(entity.getUser().getId())
-            .boothId(entity.getBooth().getId())
-            .calledPosition(entity.getCalledPosition())
-            .status(entity.getStatus())
-            .completionType(entity.getCompletionType())
-            .registeredAt(entity.getRegisteredAt())
-            .calledAt(entity.getCalledAt())
-            .enteredAt(entity.getEnteredAt())
-            .completedAt(entity.getCompletedAt())
-            .build();
+        return Waiting.of(
+                entity.getId(),
+                entity.getUser().getId(),
+                entity.getBooth().getId(),
+                entity.getCalledPosition(),
+                entity.getRegisteredAt(),
+                entity.getCalledAt(),
+                entity.getStatus(),
+                entity.getCompletionType(),
+                entity.getEnteredAt(),
+                entity.getCompletedAt()
+        );
     }
 
     /**
