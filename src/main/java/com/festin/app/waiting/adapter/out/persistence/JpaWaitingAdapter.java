@@ -72,4 +72,11 @@ public class JpaWaitingAdapter implements WaitingRepositoryPort {
         return waitingJpaRepository.findById(waitingId)
             .map(waitingMapper::toDomain);
     }
+
+    @Override
+    public List<Waiting> findActiveWaitingsByUserId(Long userId) {
+        return waitingJpaRepository.findByUserIdAndStatus(userId, WaitingStatus.CALLED).stream()
+                .map(waitingMapper::toDomain)
+                .toList();
+    }
 }

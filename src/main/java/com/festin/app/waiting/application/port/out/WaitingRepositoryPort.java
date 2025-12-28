@@ -35,4 +35,12 @@ public interface WaitingRepositoryPort {
      */
     Optional<Waiting> findById(Long waitingId);
 
+    /**
+     * 사용자의 활성 대기 목록 조회 (CALLED 상태만)
+     *
+     * @param userId 사용자 ID
+     * @return 활성 대기 목록 (CALLED 상태)
+     */
+    List<Waiting> findActiveWaitingsByUserId(Long userId);
+
 }

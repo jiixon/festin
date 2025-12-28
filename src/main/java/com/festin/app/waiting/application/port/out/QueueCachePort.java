@@ -2,6 +2,7 @@ package com.festin.app.waiting.application.port.out;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 대기열 캐시 Port
@@ -25,6 +26,20 @@ import java.util.Optional;
 public interface QueueCachePort {
 
     /**
+     * 대기열 항목
+     *
+     * dequeue 시 사용자 ID와 등록 시각을 함께 반환
+     *
+     * @param userId 사용자 ID
+     * @param registeredAt 등록 시각 (Redis Sorted Set의 score)
+     */
+    record QueueItem(
+            Long userId,
+            LocalDateTime registeredAt
+    ) {
+    }
+
+    /**
      * 대기열에 사용자 추가
      *
      * @param boothId 부스 ID
@@ -37,10 +52,15 @@ public interface QueueCachePort {
     /**
      * 대기열에서 다음 사용자 가져오기 (제거)
      *
+     * Redis ZPOPMIN을 사용하여 원자적으로 처리
+     * - userId (member)와 registeredAt (score)을 함께 반환
+     * - 1회 Redis 호출로 처리 (성능 최적화)
+     * - Race Condition 없음
+     *
      * @param boothId 부스 ID
-     * @return 다음 사용자 ID
+     * @return 대기열 항목 (userId, registeredAt)
      */
-    Optional<Long> dequeue(Long boothId);
+    Optional<QueueItem> dequeue(Long boothId);
 
     /**
      * 사용자의 대기 순번 조회
@@ -100,4 +120,12 @@ public interface QueueCachePort {
      * @param boothId 부스 ID
      */
     void removeUserActiveBooth(Long userId, Long boothId);
+
+    /**
+     * 사용자의 활성 부스 목록 조회
+     *
+     * @param userId 사용자 ID
+     * @return 활성 부스 ID 목록
+     */
+    Set<Long> getUserActiveBooths(Long userId);
 }

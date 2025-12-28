@@ -24,4 +24,13 @@ public interface WaitingJpaRepository extends JpaRepository<WaitingEntity, Long>
      */
     @Query("SELECT COUNT(w) FROM WaitingEntity w WHERE w.user.id = :userId AND w.status IN :statuses")
     int countByUserIdAndStatusIn(@Param("userId") Long userId, @Param("statuses") List<WaitingStatus> statuses);
+
+    /**
+     * 사용자의 CALLED 상태 대기 목록 조회
+     *
+     * @param userId 사용자 ID
+     * @param status 상태 (CALLED)
+     * @return 대기 목록
+     */
+    List<WaitingEntity> findByUserIdAndStatus(Long userId, WaitingStatus status);
 }
