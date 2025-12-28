@@ -60,6 +60,16 @@ public class JpaBoothAdapter implements BoothRepositoryPort {
             .collect(Collectors.toList());
     }
 
+    @Override
+    public Optional<BoothInfo> findBoothInfoById(Long boothId) {
+        return boothJpaRepository.findById(boothId)
+            .map(entity -> {
+                // University를 명시적으로 로드
+                entity.getUniversity().getName();
+                return toBoothInfo(entity);
+            });
+    }
+
     private BoothInfo toBoothInfo(BoothEntity entity) {
         return new BoothInfo(
             entity.getId(),
@@ -68,7 +78,9 @@ public class JpaBoothAdapter implements BoothRepositoryPort {
             entity.getUniversity().getId(),
             entity.getUniversity().getName(),
             entity.getCapacity(),
-            entity.getStatus()
+            entity.getStatus(),
+            entity.getOpenTime(),
+            entity.getCloseTime()
         );
     }
 }

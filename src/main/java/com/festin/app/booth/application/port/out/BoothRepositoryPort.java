@@ -56,4 +56,12 @@ public interface BoothRepositoryPort {
      */
     List<BoothInfo> findAllBoothInfoByUniversityId(Long universityId);
 
+    /**
+     * ID로 Booth 정보 조회 (Read Model)
+     *
+     * @param boothId 부스 ID
+     * @return BoothInfo
+     */
+    Optional<BoothInfo> findBoothInfoById(Long boothId);
+
 }

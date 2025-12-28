@@ -1,9 +1,12 @@
 package com.festin.app.booth.adapter.in.web;
 
+import com.festin.app.booth.adapter.in.web.dto.BoothDetailResponse;
 import com.festin.app.booth.adapter.in.web.dto.BoothListResponse;
 import com.festin.app.booth.adapter.in.web.dto.CompleteResponse;
 import com.festin.app.booth.adapter.in.web.dto.EntranceResponse;
+import com.festin.app.booth.application.port.in.GetBoothDetailUseCase;
 import com.festin.app.booth.application.port.in.GetBoothListUseCase;
+import com.festin.app.booth.application.port.in.dto.BoothDetailResult;
 import com.festin.app.booth.application.port.in.dto.BoothListResult;
 import com.festin.app.waiting.application.port.in.CompleteExperienceUseCase;
 import com.festin.app.waiting.application.port.in.ConfirmEntranceUseCase;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
  *
  * API 스펙:
  * - GET /api/v1/booths - 부스 목록 조회
+ * - GET /api/v1/booths/{boothId} - 부스 상세 조회
  * - POST /api/v1/booths/{boothId}/entrance/{waitingId} - 입장 확인 (스태프 전용)
  * - POST /api/v1/booths/{boothId}/complete/{waitingId} - 체험 완료 (스태프 전용)
  */
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class BoothController {
 
     private final GetBoothListUseCase getBoothListUseCase;
+    private final GetBoothDetailUseCase getBoothDetailUseCase;
     private final ConfirmEntranceUseCase confirmEntranceUseCase;
     private final CompleteExperienceUseCase completeExperienceUseCase;
 
@@ -44,6 +49,22 @@ public class BoothController {
     ) {
         BoothListResult result = getBoothListUseCase.getBoothList(universityId);
         return ResponseEntity.ok(BoothListResponse.from(result));
+    }
+
+    /**
+     * 부스 상세 조회
+     *
+     * GET /api/v1/booths/{boothId}
+     *
+     * @param boothId 부스 ID (Path Variable)
+     * @return 200 OK - 부스 상세 정보
+     */
+    @GetMapping("/{boothId}")
+    public ResponseEntity<BoothDetailResponse> getBoothDetail(
+            @PathVariable Long boothId
+    ) {
+        BoothDetailResult result = getBoothDetailUseCase.getBoothDetail(boothId);
+        return ResponseEntity.ok(BoothDetailResponse.from(result));
     }
 
     /**
