@@ -9,11 +9,13 @@ import com.festin.app.waiting.adapter.out.persistence.entity.WaitingEntity;
 import com.festin.app.waiting.adapter.out.persistence.mapper.WaitingMapper;
 import com.festin.app.waiting.adapter.out.persistence.repository.WaitingJpaRepository;
 import com.festin.app.waiting.application.port.out.WaitingRepositoryPort;
+import com.festin.app.waiting.application.port.out.dto.CalledWaitingInfo;
 import com.festin.app.waiting.domain.model.Waiting;
 import com.festin.app.waiting.domain.model.WaitingStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,5 +80,40 @@ public class JpaWaitingAdapter implements WaitingRepositoryPort {
         return waitingJpaRepository.findByUserIdAndStatus(userId, WaitingStatus.CALLED).stream()
                 .map(waitingMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public int countTodayCalledByBoothId(Long boothId, LocalDate date) {
+        return waitingJpaRepository.countTodayCalledByBoothId(boothId, date);
+    }
+
+    @Override
+    public int countTodayEnteredByBoothId(Long boothId, LocalDate date) {
+        return waitingJpaRepository.countTodayEnteredByBoothId(boothId, date);
+    }
+
+    @Override
+    public int countTodayNoShowByBoothId(Long boothId, LocalDate date) {
+        return waitingJpaRepository.countTodayNoShowByBoothId(boothId, date);
+    }
+
+    @Override
+    public int countTodayCompletedByBoothId(Long boothId, LocalDate date) {
+        return waitingJpaRepository.countTodayCompletedByBoothId(boothId, date);
+    }
+
+    @Override
+    public List<CalledWaitingInfo> findCalledByBoothIdWithUserInfo(Long boothId) {
+        return waitingJpaRepository.findByBoothIdAndStatusWithUser(boothId, WaitingStatus.CALLED)
+            .stream()
+            .map(entity -> new CalledWaitingInfo(
+                entity.getId(),
+                entity.getUser().getId(),
+                entity.getUser().getNickname(),
+                entity.getCalledPosition(),
+                entity.getStatus(),
+                entity.getCalledAt()
+            ))
+            .toList();
     }
 }
