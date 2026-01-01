@@ -3,6 +3,7 @@ package com.festin.app.cucumber;
 import com.festin.app.booth.adapter.in.web.dto.BoothDetailResponse;
 import com.festin.app.booth.adapter.in.web.dto.BoothListResponse;
 import com.festin.app.booth.adapter.in.web.dto.BoothStatusResponse;
+import com.festin.app.user.adapter.in.web.dto.UpdateFcmTokenResponse;
 import com.festin.app.waiting.adapter.in.web.dto.CalledListResponse;
 import com.festin.app.waiting.adapter.in.web.dto.MyWaitingListResponse;
 import io.cucumber.spring.ScenarioScope;
@@ -31,6 +32,7 @@ public class TestContext {
     private BoothStatusResponse boothStatusResponse;
     private CalledListResponse calledListResponse;
     private MyWaitingListResponse myWaitingListResponse;
+    private UpdateFcmTokenResponse updateFcmTokenResponse;
 
     // Map Getters (캡슐화를 유지하면서 Map 접근 허용)
     public Map<String, Long> getUserMap() {
@@ -90,6 +92,15 @@ public class TestContext {
         return myWaitingListResponse;
     }
 
+    // Update FCM Token Response
+    public void setUpdateFcmTokenResponse(UpdateFcmTokenResponse response) {
+        this.updateFcmTokenResponse = response;
+    }
+
+    public UpdateFcmTokenResponse getUpdateFcmTokenResponse() {
+        return updateFcmTokenResponse;
+    }
+
     // Clear All
     public void clearAll() {
         userMap.clear();
@@ -100,5 +111,6 @@ public class TestContext {
         boothStatusResponse = null;
         calledListResponse = null;
         myWaitingListResponse = null;
+        updateFcmTokenResponse = null;
     }
 }
