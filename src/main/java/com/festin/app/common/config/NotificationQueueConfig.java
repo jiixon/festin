@@ -2,16 +2,16 @@ package com.festin.app.common.config;
 
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * 알림 큐 설정
  *
- * RabbitMQ 큐 설정
- *
- * Spring Boot 4는 자동으로 JSON 메시지 변환을 처리합니다.
- * @JsonTypeInfo와 @JsonSubTypes 어노테이션을 통해 다형성 직렬화가 지원됩니다.
+ * RabbitMQ 큐 및 메시지 컨버터 설정
+ * @JsonTypeInfo와 @JsonSubTypes를 통한 다형성 직렬화 지원
  */
 @Configuration
 public class NotificationQueueConfig {
@@ -29,5 +29,17 @@ public class NotificationQueueConfig {
     public Queue notificationQueue() {
         return QueueBuilder.durable(NOTIFICATION_QUEUE)
                 .build();
+    }
+
+    /**
+     * JSON 메시지 컨버터
+     *
+     * Jackson2JsonMessageConverter가 NotificationCommand의
+     * sealed interface 다형성을 처리합니다.
+     * @JsonTypeInfo와 @JsonSubTypes 어노테이션이 자동으로 적용됩니다.
+     */
+    @Bean
+    public MessageConverter messageConverter() {
+        return new Jackson2JsonMessageConverter();
     }
 }
