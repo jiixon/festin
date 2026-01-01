@@ -5,6 +5,7 @@ import com.festin.app.waiting.domain.model.Waiting;
 import com.festin.app.waiting.domain.model.WaitingStatus;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,5 +89,13 @@ public interface WaitingRepositoryPort {
      * @return 호출된 대기 목록 (User nickname 포함, calledAt 순으로 정렬)
      */
     List<CalledWaitingInfo> findCalledByBoothIdWithUserInfo(Long boothId);
+
+    /**
+     * 타임아웃된 대기 조회 (노쇼 처리 대상)
+     *
+     * @param timeoutThreshold 타임아웃 기준 시각 (예: 현재시각 - 5분)
+     * @return CALLED 상태이면서 calledAt이 timeoutThreshold 이전인 대기 목록
+     */
+    List<Waiting> findTimeoutWaitings(LocalDateTime timeoutThreshold);
 
 }

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -115,5 +116,13 @@ public class JpaWaitingAdapter implements WaitingRepositoryPort {
                 entity.getCalledAt()
             ))
             .toList();
+    }
+
+    @Override
+    public List<Waiting> findTimeoutWaitings(LocalDateTime timeoutThreshold) {
+        return waitingJpaRepository.findByStatusAndCalledAtBefore(WaitingStatus.CALLED, timeoutThreshold)
+                .stream()
+                .map(waitingMapper::toDomain)
+                .toList();
     }
 }
