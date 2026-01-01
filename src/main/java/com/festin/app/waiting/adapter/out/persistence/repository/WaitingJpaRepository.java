@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -33,4 +34,76 @@ public interface WaitingJpaRepository extends JpaRepository<WaitingEntity, Long>
      * @return 대기 목록
      */
     List<WaitingEntity> findByUserIdAndStatus(Long userId, WaitingStatus status);
+
+    /**
+     * 오늘 호출된 총 인원 (부스별)
+     *
+     * @param boothId 부스 ID
+     * @param date 조회 날짜
+     * @return 호출된 총 인원
+     */
+    @Query("SELECT COUNT(w) FROM WaitingEntity w " +
+           "WHERE w.booth.id = :boothId " +
+           "AND DATE(w.calledAt) = :date")
+    int countTodayCalledByBoothId(@Param("boothId") Long boothId, @Param("date") LocalDate date);
+
+    /**
+     * 오늘 입장한 총 인원 (부스별, ENTERED 상태)
+     *
+     * @param boothId 부스 ID
+     * @param date 조회 날짜
+     * @return 입장한 총 인원
+     */
+    @Query("SELECT COUNT(w) FROM WaitingEntity w " +
+           "WHERE w.booth.id = :boothId " +
+           "AND w.status = 'ENTERED' " +
+           "AND DATE(w.calledAt) = :date")
+    int countTodayEnteredByBoothId(@Param("boothId") Long boothId, @Param("date") LocalDate date);
+
+    /**
+     * 오늘 노쇼 총 인원 (부스별, COMPLETED + NO_SHOW)
+     *
+     * @param boothId 부스 ID
+     * @param date 조회 날짜
+     * @return 노쇼 총 인원
+     */
+    @Query("SELECT COUNT(w) FROM WaitingEntity w " +
+           "WHERE w.booth.id = :boothId " +
+           "AND w.status = 'COMPLETED' " +
+           "AND w.completionType = 'NO_SHOW' " +
+           "AND DATE(w.calledAt) = :date")
+    int countTodayNoShowByBoothId(@Param("boothId") Long boothId, @Param("date") LocalDate date);
+
+    /**
+     * 오늘 정상 완료 총 인원 (부스별, COMPLETED + ENTERED)
+     *
+     * @param boothId 부스 ID
+     * @param date 조회 날짜
+     * @return 정상 완료 총 인원
+     */
+    @Query("SELECT COUNT(w) FROM WaitingEntity w " +
+           "WHERE w.booth.id = :boothId " +
+           "AND w.status = 'COMPLETED' " +
+           "AND w.completionType = 'ENTERED' " +
+           "AND DATE(w.calledAt) = :date")
+    int countTodayCompletedByBoothId(@Param("boothId") Long boothId, @Param("date") LocalDate date);
+
+    /**
+     * 부스의 호출된 대기 목록 조회 (User 정보 포함)
+     *
+     * JOIN FETCH로 User 엔티티를 즉시 로딩하여 N+1 쿼리 방지
+     *
+     * @param boothId 부스 ID
+     * @param status 상태 (CALLED)
+     * @return 호출된 대기 목록 (User JOIN FETCH, calledAt 순 정렬)
+     */
+    @Query("SELECT w FROM WaitingEntity w " +
+           "JOIN FETCH w.user " +
+           "WHERE w.booth.id = :boothId " +
+           "AND w.status = :status " +
+           "ORDER BY w.calledAt ASC")
+    List<WaitingEntity> findByBoothIdAndStatusWithUser(
+        @Param("boothId") Long boothId,
+        @Param("status") WaitingStatus status
+    );
 }

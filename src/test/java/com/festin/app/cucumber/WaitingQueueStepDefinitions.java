@@ -1,15 +1,10 @@
 package com.festin.app.cucumber;
 
-import com.festin.app.booth.adapter.out.persistence.entity.BoothEntity;
-import com.festin.app.booth.adapter.out.persistence.repository.BoothJpaRepository;
-import com.festin.app.booth.domain.model.BoothStatus;
+import com.festin.app.fixture.BoothFixture;
+import com.festin.app.fixture.UserFixture;
 import com.festin.app.university.adapter.out.persistence.entity.UniversityEntity;
 import com.festin.app.university.adapter.out.persistence.repository.UniversityJpaRepository;
-import com.festin.app.user.adapter.out.persistence.entity.UserEntity;
-import com.festin.app.user.adapter.out.persistence.repository.UserJpaRepository;
-import com.festin.app.user.domain.model.Role;
 import com.festin.app.waiting.adapter.out.persistence.repository.WaitingJpaRepository;
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -24,49 +19,41 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * 대기열 등록 Step Definitions
+ *
+ * Fixture 패턴 적용으로 코드 간소화
+ * CucumberHooks로 초기화 처리 (중복 제거)
+ */
 public class WaitingQueueStepDefinitions {
 
     @LocalServerPort
     private int port;
 
     @Autowired
-    private WaitingJpaRepository waitingJpaRepository;
+    private UserFixture userFixture;
+
+    @Autowired
+    private BoothFixture boothFixture;
 
     @Autowired
     private UniversityJpaRepository universityRepository;
 
     @Autowired
-    private BoothJpaRepository boothRepository;
-
-    @Autowired
-    private UserJpaRepository userRepository;
+    private WaitingJpaRepository waitingJpaRepository;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
-    private WebTestClient webTestClient;
+    @Autowired
+    private TestContext testContext;
+
     private Long testUniversityId;
     private Long testBoothId;
     private Long testUserId;
     private WebTestClient.ResponseSpec lastResponse;
     private Map<String, Object> lastResponseBody;
     private Long lastWaitingId;
-
-    @Before
-    public void setup() {
-        waitingJpaRepository.deleteAll();
-        userRepository.deleteAll();
-        boothRepository.deleteAll();
-        universityRepository.deleteAll();
-
-        webTestClient = WebTestClient
-                .bindToServer()
-                .baseUrl("http://localhost:" + port)
-                .build();
-        redisTemplate.getConnectionFactory()
-                .getConnection()
-                .flushAll();
-    }
 
     @Given("테스트용 대학교가 존재한다")
     public void createTestUniversity() {
@@ -83,36 +70,12 @@ public class WaitingQueueStepDefinitions {
         UniversityEntity university = universityRepository.findById(testUniversityId)
                 .orElseThrow();
 
-        BoothEntity booth = new BoothEntity(
-                university,
-                "테스트 부스",
-                "부스 설명",
-                10,
-                BoothStatus.OPEN
-        );
-        testBoothId = boothRepository.save(booth).getId();
-
-        // Redis에 부스 메타 정보 저장
-        String metaKey = "booth:" + testBoothId + ":meta";
-        redisTemplate.opsForHash().put(metaKey, "status", "OPEN");
-        redisTemplate.opsForHash().put(metaKey, "name", "테스트 부스");
-        redisTemplate.opsForHash().put(metaKey, "capacity", "10");
-
-
-        String currentKey = "booth:" + testBoothId + ":current";
-        redisTemplate.opsForValue().set(currentKey, "0");
+        testBoothId = boothFixture.createOpenBooth(university, "테스트 부스", 10);
     }
 
     @Given("테스트용 사용자가 존재한다")
     public void createTestUser() {
-        String uniqueEmail = "test-" + System.currentTimeMillis() + "@test.com";
-        UserEntity user = new UserEntity(
-                uniqueEmail,
-                "테스트유저",
-                Role.VISITOR
-        );
-        user.updateFcmToken("fD7sXkPqR8u9ZcE4YVw2K3M0B1A6JHnO_LmTQp5iUeRZxC");
-        testUserId = userRepository.save(user).getId();
+        testUserId = userFixture.createVisitorWithFcm("테스트유저", "fD7sXkPqR8u9ZcE4YVw2K3M0B1A6JHnO_LmTQp5iUeRZxC");
     }
 
     @Given("사용자가 로그인되어 있다")
@@ -122,9 +85,13 @@ public class WaitingQueueStepDefinitions {
 
     @When("사용자가 부스에 대기 등록을 요청한다")
     public void userRequestsEnqueue() {
+        WebTestClient client = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+
         Map<String, Object> requestBody = Map.of("boothId", testBoothId);
 
-        lastResponse = webTestClient.post()
+        lastResponse = client.post()
                 .uri("/api/v1/waitings")
                 .header("X-User-Id", testUserId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -174,7 +141,11 @@ public class WaitingQueueStepDefinitions {
 
     @When("사용자가 부스의 순번을 조회한다")
     public void userRequestsPosition() {
-        lastResponse = webTestClient.get()
+        WebTestClient client = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+
+        lastResponse = client.get()
                 .uri("/api/v1/waitings/booth/" + testBoothId)
                 .header("X-User-Id", testUserId.toString())
                 .exchange();
@@ -193,7 +164,11 @@ public class WaitingQueueStepDefinitions {
 
     @When("사용자가 대기를 취소한다")
     public void userCancelsWaiting() {
-        lastResponse = webTestClient.delete()
+        WebTestClient client = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+
+        lastResponse = client.delete()
                 .uri("/api/v1/waitings/" + testBoothId)
                 .header("X-User-Id", testUserId.toString())
                 .exchange();
@@ -226,11 +201,15 @@ public class WaitingQueueStepDefinitions {
     @When("스태프가 다음 사람을 호출한다")
     @Given("스태프가 사용자를 호출했다")
     public void staffCallsNextUser() {
+        WebTestClient client = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+
         Map<String, Object> requestBody = Map.of(
                 "boothId", testBoothId
         );
 
-        lastResponse = webTestClient.post()
+        lastResponse = client.post()
                 .uri("/api/v1/waitings/call")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
@@ -290,7 +269,11 @@ public class WaitingQueueStepDefinitions {
     @When("스태프가 입장을 확인한다")
     @Given("스태프가 입장을 확인했다")
     public void staffConfirmsEntrance() {
-        lastResponse = webTestClient.post()
+        WebTestClient client = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+
+        lastResponse = client.post()
                 .uri("/api/v1/booths/" + testBoothId + "/entrance/" + lastWaitingId)
                 .exchange();
 
@@ -323,7 +306,11 @@ public class WaitingQueueStepDefinitions {
 
     @When("스태프가 체험 완료 처리한다")
     public void staffCompletesExperience() {
-        lastResponse = webTestClient.post()
+        WebTestClient client = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+
+        lastResponse = client.post()
                 .uri("/api/v1/booths/" + testBoothId + "/complete/" + lastWaitingId)
                 .exchange();
 
