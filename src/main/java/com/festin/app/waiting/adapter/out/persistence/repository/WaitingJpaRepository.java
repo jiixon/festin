@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -106,4 +107,13 @@ public interface WaitingJpaRepository extends JpaRepository<WaitingEntity, Long>
         @Param("boothId") Long boothId,
         @Param("status") WaitingStatus status
     );
+
+    /**
+     * 타임아웃된 대기 조회 (노쇼 처리 대상)
+     *
+     * @param status 상태 (CALLED)
+     * @param timeoutThreshold 타임아웃 기준 시각
+     * @return 타임아웃된 대기 목록
+     */
+    List<WaitingEntity> findByStatusAndCalledAtBefore(WaitingStatus status, LocalDateTime timeoutThreshold);
 }
