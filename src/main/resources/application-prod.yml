@@ -24,6 +24,11 @@ spring:
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
+firebase:
+  enabled: true
+  credentials:
+    json: ${FIREBASE_CREDENTIALS_JSON:}
+
 management:
   endpoints:
     web:

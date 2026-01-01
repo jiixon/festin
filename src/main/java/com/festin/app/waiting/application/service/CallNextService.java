@@ -98,15 +98,15 @@ public class CallNextService implements CallNextUseCase {
         Waiting savedWaiting = waitingRepositoryPort.save(waiting);
 
         // 푸시 알림 발송
-        // TODO: 트랜잭셔널 이벤트(@TransactionalEventListener)로 변경하여 DB 커밋 후 실행
-        // TODO: RabbitMQ 또는 Kafka로 실제 알림 발송 구현
+        String eventId = "call:" + savedWaiting.getId();
         NotificationPort.CallNotification notification = new NotificationPort.CallNotification(
+                eventId,
                 userId,
                 boothId,
                 booth.getName(),
                 calledPosition
         );
-        notificationPort.sendCallNotification(notification);
+        notificationPort.send(notification);
 
         // 결과 반환
         return new CallResult(

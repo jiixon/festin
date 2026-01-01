@@ -52,3 +52,7 @@ docs/
 .env
 .env.local
 .env.prod
+
+### Firebase Credentials ###
+firebase-service-account.json
+**/firebase-service-account*.json
