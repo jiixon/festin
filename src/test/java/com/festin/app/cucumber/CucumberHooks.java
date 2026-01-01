@@ -33,6 +33,9 @@ public class CucumberHooks {
     @Autowired
     private TestContext testContext;
 
+    @Autowired
+    private TestRabbitMQConsumer testRabbitMQConsumer;
+
     /**
      * 각 시나리오 실행 전 초기화
      */
@@ -51,5 +54,8 @@ public class CucumberHooks {
 
         // TestContext 초기화
         testContext.clearAll();
+
+        // RabbitMQ Consumer 초기화
+        testRabbitMQConsumer.reset();
     }
 }

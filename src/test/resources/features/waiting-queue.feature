@@ -38,6 +38,7 @@ Feature: Waiting Queue API
     And 호출 결과에 사용자 정보가 포함된다
     And 대기열에서 호출된 사용자는 제거되었다
     And 사용자 활성 부스 목록에서 제거되었다
+    And 푸시 알림이 발송되었다
 
   Scenario: Successfully confirm entrance after call
     Given 부스에 대기 중인 사용자가 존재한다

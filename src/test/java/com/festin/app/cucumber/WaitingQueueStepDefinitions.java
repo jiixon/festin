@@ -48,6 +48,9 @@ public class WaitingQueueStepDefinitions {
     @Autowired
     private TestContext testContext;
 
+    @Autowired
+    private TestRabbitMQConsumer testRabbitMQConsumer;
+
     private Long testUniversityId;
     private Long testBoothId;
     private Long testUserId;
@@ -340,5 +343,23 @@ public class WaitingQueueStepDefinitions {
         String currentCount = redisTemplate.opsForValue().get(currentKey);
         assertThat(currentCount).isNotNull();
         assertThat(Integer.parseInt(currentCount)).isEqualTo(0);
+    }
+
+    @Then("푸시 알림이 발송되었다")
+    public void pushNotificationWasSent() throws InterruptedException {
+        // RabbitMQ 메시지가 도착할 때까지 대기 (최대 3초)
+        boolean received = testRabbitMQConsumer.getNotificationLatch().await(3, java.util.concurrent.TimeUnit.SECONDS);
+        assertThat(received).isTrue();
+
+        var notification = testRabbitMQConsumer.getLastNotification();
+        assertThat(notification).isNotNull();
+        assertThat(notification).isInstanceOf(com.festin.app.waiting.application.port.out.NotificationPort.CallNotification.class);
+
+        var callNotification = (com.festin.app.waiting.application.port.out.NotificationPort.CallNotification) notification;
+        assertThat(callNotification.userId()).isEqualTo(testUserId);
+        assertThat(callNotification.boothId()).isEqualTo(testBoothId);
+        assertThat(callNotification.boothName()).isEqualTo("테스트 부스");
+        assertThat(callNotification.calledPosition()).isEqualTo(1);
+        assertThat(callNotification.eventId()).startsWith("call:");
     }
 }
