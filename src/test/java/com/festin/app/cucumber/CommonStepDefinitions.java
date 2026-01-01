@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * 여러 Feature에서 재사용되는 Given steps만 정의
  * Fixture 패턴 적용으로 코드 간소화
+ * Fixture 사용해서 기본 엔티티 생성
+ * TestContext에 ID 저장
  */
 public class CommonStepDefinitions {
 

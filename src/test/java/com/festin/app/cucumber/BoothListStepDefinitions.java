@@ -1,9 +1,7 @@
 package com.festin.app.cucumber;
 
 import com.festin.app.booth.adapter.in.web.dto.BoothListResponse;
-import com.festin.app.user.adapter.out.persistence.entity.UserEntity;
-import com.festin.app.user.adapter.out.persistence.repository.UserJpaRepository;
-import com.festin.app.user.domain.model.Role;
+import com.festin.app.fixture.UserFixture;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -20,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 부스 목록 조회 Step Definitions
  *
  * 도메인 특화 When/Then steps만 정의
+ * Fixture 패턴 적용으로 코드 간소화
  */
 public class BoothListStepDefinitions {
 
@@ -27,7 +26,7 @@ public class BoothListStepDefinitions {
     private int port;
 
     @Autowired
-    private UserJpaRepository userRepository;
+    private UserFixture userFixture;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -40,13 +39,11 @@ public class BoothListStepDefinitions {
         Long boothId = testContext.getBoothMap().get(boothName);
         String queueKey = "queue:booth:" + boothId;
 
-        // Redis Sorted Set에 대기자 추가
+        // UserFixture로 사용자 생성 후 Redis 대기열 추가
         for (int i = 0; i < waitingCount; i++) {
-            String uniqueEmail = "user" + i + "-" + System.currentTimeMillis() + "@test.com";
-            UserEntity user = new UserEntity(uniqueEmail, "테스트유저" + i, Role.VISITOR);
-            Long userId = userRepository.save(user).getId();
+            Long userId = userFixture.createVisitor("waiting-user-" + i);
 
-            // Redis에 대기 추가
+            // Redis 대기열에 추가
             double score = LocalDateTime.now().plusSeconds(i).atZone(java.time.ZoneId.systemDefault()).toEpochSecond();
             redisTemplate.opsForZSet().add(queueKey, String.valueOf(userId), score);
         }
