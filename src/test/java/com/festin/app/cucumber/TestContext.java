@@ -2,6 +2,8 @@ package com.festin.app.cucumber;
 
 import com.festin.app.booth.adapter.in.web.dto.BoothDetailResponse;
 import com.festin.app.booth.adapter.in.web.dto.BoothListResponse;
+import com.festin.app.booth.adapter.in.web.dto.BoothStatusResponse;
+import com.festin.app.waiting.adapter.in.web.dto.CalledListResponse;
 import com.festin.app.waiting.adapter.in.web.dto.MyWaitingListResponse;
 import io.cucumber.spring.ScenarioScope;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,8 @@ public class TestContext {
     // API 응답 저장소
     private BoothListResponse boothListResponse;
     private BoothDetailResponse boothDetailResponse;
+    private BoothStatusResponse boothStatusResponse;
+    private CalledListResponse calledListResponse;
     private MyWaitingListResponse myWaitingListResponse;
 
     // Map Getters (캡슐화를 유지하면서 Map 접근 허용)
@@ -59,6 +63,24 @@ public class TestContext {
         return boothDetailResponse;
     }
 
+    // Booth Status Response
+    public void setBoothStatusResponse(BoothStatusResponse response) {
+        this.boothStatusResponse = response;
+    }
+
+    public BoothStatusResponse getBoothStatusResponse() {
+        return boothStatusResponse;
+    }
+
+    // Called List Response
+    public void setCalledListResponse(CalledListResponse response) {
+        this.calledListResponse = response;
+    }
+
+    public CalledListResponse getCalledListResponse() {
+        return calledListResponse;
+    }
+
     // My Waiting List Response
     public void setMyWaitingListResponse(MyWaitingListResponse response) {
         this.myWaitingListResponse = response;
@@ -75,6 +97,8 @@ public class TestContext {
         boothMap.clear();
         boothListResponse = null;
         boothDetailResponse = null;
+        boothStatusResponse = null;
+        calledListResponse = null;
         myWaitingListResponse = null;
     }
 }
