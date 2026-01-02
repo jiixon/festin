@@ -25,4 +25,13 @@ public class MaxWaitingPolicy {
             throw new MaxWaitingExceededException();
         }
     }
+
+    /**
+     * 최대 대기 가능 부스 수 반환
+     *
+     * @return 최대 부스 수 (2)
+     */
+    public int getMaxWaitingBooths() {
+        return MAX_ACTIVE_BOOTHS;
+    }
 }
