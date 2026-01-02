@@ -9,6 +9,7 @@ import com.festin.app.common.exception.ErrorCode;
  * 발생 상황:
  * - 대기열 추가 후 순번 조회 실패
  * - Redis 대기열 작업 중 일관성 문제 발생
+ * - Lua Script 실행 실패
  */
 public class QueueOperationException extends DomainException {
 
@@ -18,5 +19,13 @@ public class QueueOperationException extends DomainException {
 
     public static QueueOperationException enqueueFailed() {
         return new QueueOperationException("대기열 추가 후 순번 조회에 실패했습니다.");
+    }
+
+    public static QueueOperationException scriptExecutionFailed() {
+        return new QueueOperationException("Lua Script 실행 중 오류가 발생했습니다.");
+    }
+
+    public static QueueOperationException unknownScriptResult(int statusCode) {
+        return new QueueOperationException("Lua Script 실행 결과가 올바르지 않습니다. (status: " + statusCode + ")");
     }
 }

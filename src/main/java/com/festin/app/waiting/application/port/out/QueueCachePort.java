@@ -128,4 +128,53 @@ public interface QueueCachePort {
      * @return 활성 부스 ID 목록
      */
     Set<Long> getUserActiveBooths(Long userId);
+
+    /**
+     * 원자적 대기 등록 (Lua Script)
+     *
+     * Race Condition 방지:
+     * - activeCount 체크 → 중복 체크 → enqueue → addActiveBooth를 단일 원자적 작업으로 처리
+     * - Redis 단일 스레드 특성으로 완벽한 원자성 보장
+     *
+     * @param boothId 부스 ID
+     * @param userId 사용자 ID
+     * @param registeredAt 등록 시각
+     * @param maxActiveBooths 최대 활성 부스 수
+     * @return 등록 결과 (상태, 순번, 전체 대기자 수)
+     */
+    EnqueueAtomicResult enqueueAtomic(Long boothId, Long userId, LocalDateTime registeredAt, int maxActiveBooths);
+
+    /**
+     * 원자적 등록 결과
+     *
+     * @param status 등록 상태
+     * @param position 순번 (1부터 시작, 실패 시 -1)
+     * @param totalWaiting 전체 대기자 수 (실패 시 -1)
+     */
+    record EnqueueAtomicResult(
+            EnqueueStatus status,
+            Integer position,
+            Integer totalWaiting
+    ) {
+    }
+
+    /**
+     * 원자적 등록 상태
+     */
+    enum EnqueueStatus {
+        /**
+         * 성공 (신규 등록)
+         */
+        SUCCESS,
+
+        /**
+         * 이미 등록되어 있음 (멱등성)
+         */
+        ALREADY_ENQUEUED,
+
+        /**
+         * 최대 활성 부스 수 초과
+         */
+        MAX_BOOTHS_EXCEEDED
+    }
 }

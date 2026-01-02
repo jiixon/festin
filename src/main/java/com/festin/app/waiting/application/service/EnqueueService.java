@@ -8,7 +8,9 @@ import com.festin.app.booth.domain.BoothNotFoundException;
 import com.festin.app.booth.domain.model.Booth;
 import com.festin.app.booth.domain.model.BoothStatus;
 import com.festin.app.waiting.application.port.out.QueueCachePort;
-import com.festin.app.waiting.domain.exception.QueueOperationException;
+import com.festin.app.waiting.application.port.out.QueueCachePort.EnqueueAtomicResult;
+import com.festin.app.waiting.application.port.out.QueueCachePort.EnqueueStatus;
+import com.festin.app.waiting.domain.exception.MaxWaitingExceededException;
 import com.festin.app.waiting.domain.model.EstimatedWaitTime;
 import com.festin.app.waiting.domain.policy.MaxWaitingPolicy;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +22,14 @@ import java.time.LocalDateTime;
 /**
  * 대기 등록 UseCase 구현
  *
- * 비즈니스 흐름 (멱등성 보장):
+ * 비즈니스 흐름 (멱등성 보장 + Race Condition 방지):
  * 1. 부스 운영 상태 검증 (OPEN 여부)
- * 2. 중복 등록 체크 - 이미 등록되어 있으면 현재 정보 반환 (멱등성)
- * 3. 최대 대기 수 검증 (2개 제한) - 신규 등록인 경우에만
- * 4. Redis 대기열에 추가
- * 5. 순번 및 예상 대기 시간 계산
+ * 2. Lua Script로 원자적 등록 처리
+ *    - 중복 등록 체크 (멱등성)
+ *    - 최대 대기 수 검증 (2개 제한)
+ *    - Redis 대기열에 추가
+ *    - 활성 부스 목록에 추가
+ * 3. 결과에 따라 적절한 응답 반환
  */
 @Service
 @RequiredArgsConstructor
@@ -62,54 +66,51 @@ public class EnqueueService implements EnqueueUseCase {
         // 운영 상태 검증 (Booth 도메인 로직)
         booth.validateForEnqueue();
 
-        // 멱등성 체크 - 이미 등록되어 있으면 기존 정보 반환
-        Integer existingPosition = queueCachePort.getPosition(boothId, userId).orElse(null);
-
-        if (existingPosition != null) {
-            // 이미 등록되어 있음 - 현재 정보 반환 (멱등성 보장)
-            int totalWaiting = queueCachePort.getQueueSize(boothId);
-            EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromPosition(existingPosition);
-
-            // Redis Score에서 원래 등록 시간 조회
-            LocalDateTime registeredAt = queueCachePort.getRegisteredAt(boothId, userId)
-                .orElse(now);  // 만약 조회 실패하면 현재 시간 사용
-
-            return new EnqueueResult(
+        // Lua Script로 원자적 등록 처리
+        // - 중복 체크, 최대 부스 수 검증, enqueue, addActiveBooth를 원자적으로 처리
+        // - Redis 단일 스레드 특성으로 Race Condition 완전 방지
+        EnqueueAtomicResult result = queueCachePort.enqueueAtomic(
                 boothId,
-                booth.getName(),
-                existingPosition,
-                totalWaiting,
-                estimatedWaitTime.minutes(),
-                registeredAt
-            );
-        }
-
-        // 최대 대기 수 검증 (2개 부스 제한)
-        int activeCount = queueCachePort.getUserActiveBoothCount(userId);
-        maxWaitingPolicy.validate(activeCount);
-
-        // Redis 대기열에 추가 (신규 등록)
-        queueCachePort.enqueue(boothId, userId, now);
-
-        // 사용자 활성 부스 목록에 추가
-        queueCachePort.addUserActiveBooth(userId, boothId);
-
-        // 순번 및 대기자 수 조회
-        // TODO: Lua 스크립트로 원자성 보장 (enqueue + getPosition을 하나의 작업으로)
-        Integer position = queueCachePort.getPosition(boothId, userId)
-            .orElseThrow(QueueOperationException::enqueueFailed);
-        int totalWaiting = queueCachePort.getQueueSize(boothId);
-
-        // 예상 대기 시간 계산
-        EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromPosition(position);
-
-        return new EnqueueResult(
-            boothId,
-            booth.getName(),
-            position,
-            totalWaiting,
-            estimatedWaitTime.minutes(),
-            now
+                userId,
+                now,
+                maxWaitingPolicy.getMaxWaitingBooths()
         );
+
+        // 상태별 처리
+        return switch (result.status()) {
+            case SUCCESS -> {
+                // 신규 등록 성공
+                EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromPosition(result.position());
+                yield new EnqueueResult(
+                        boothId,
+                        boothName,
+                        result.position(),
+                        result.totalWaiting(),
+                        estimatedWaitTime.minutes(),
+                        now
+                );
+            }
+            case ALREADY_ENQUEUED -> {
+                // 이미 등록되어 있음 (멱등성)
+                EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromPosition(result.position());
+
+                // 원래 등록 시간 조회
+                LocalDateTime registeredAt = queueCachePort.getRegisteredAt(boothId, userId)
+                        .orElse(now);
+
+                yield new EnqueueResult(
+                        boothId,
+                        boothName,
+                        result.position(),
+                        result.totalWaiting(),
+                        estimatedWaitTime.minutes(),
+                        registeredAt
+                );
+            }
+            case MAX_BOOTHS_EXCEEDED -> {
+                // 최대 활성 부스 수 초과 (2개 제한)
+                throw new MaxWaitingExceededException();
+            }
+        };
     }
 }
