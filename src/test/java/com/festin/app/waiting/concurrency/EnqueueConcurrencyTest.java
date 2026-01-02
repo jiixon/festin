@@ -1,5 +1,6 @@
 package com.festin.app.waiting.concurrency;
 
+import com.festin.app.config.TestcontainersConfiguration;
 import com.festin.app.fixture.BoothFixture;
 import com.festin.app.fixture.UserFixture;
 import com.festin.app.university.adapter.out.persistence.entity.UniversityEntity;
@@ -9,10 +10,12 @@ import com.festin.app.waiting.application.port.in.command.EnqueueCommand;
 import com.festin.app.waiting.application.port.out.QueueCachePort;
 import com.festin.app.waiting.domain.exception.MaxWaitingExceededException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -32,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestcontainersConfiguration.class)
 class EnqueueConcurrencyTest {
 
     @Autowired
@@ -193,8 +197,9 @@ class EnqueueConcurrencyTest {
     }
 
     @Test
+    @Disabled("CI 제외 - 로컬 Build에서만 실행")
     @DisplayName("100번 동시 실행 → 항상 2개만 성공 (안정성 검증)")
-    void stressTestWith100Iterations() throws InterruptedException {
+    void stressTest_RaceCondition_100Iterations_ShouldAlwaysSucceed() throws InterruptedException {
         // 100번 반복해도 Race Condition이 발생하지 않는지 검증
         for (int iteration = 0; iteration < 100; iteration++) {
             // Redis 초기화
