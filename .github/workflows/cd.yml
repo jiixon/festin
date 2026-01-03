@@ -1,6 +1,10 @@
+# ====================================
 # CD (Continuous Deployment) 워크플로우
-# - main 브랜치에 push될 때 자동으로 AWS EC2에 배포
-# - Docker Hub에 이미지를 푸시하고, EC2에서 최신 이미지를 pull하여 재시작
+# - main 브랜치 push 시 자동 배포
+# - Docker Hub에 이미지 푸시
+# - EC2에서 최신 이미지로 재시작
+# - Docker 레이어 캐시 활용으로 빌드 속도 최적화
+# ====================================
 
 name: CD
 
@@ -19,7 +23,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Docker Buildx 설정 (멀티 플랫폼 빌드 및 캐싱 지원)
+      # 2. Docker Buildx 설정
+      # - 멀티 플랫폼 빌드 지원
+      # - 캐싱 최적화
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -30,9 +36,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 4. Docker 이미지 메타데이터 생성 (태그 및 레이블)
-      # - latest 태그: 항상 최신 버전
-      # - commit SHA 태그: 특정 커밋 버전 (롤백 시 유용)
+      # 4. Docker 메타데이터 생성
+      # - latest: 최신 버전
+      # - commit SHA: 롤백 시 사용
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -43,8 +49,8 @@ jobs:
             type=raw,value=latest
 
       # 5. Docker 이미지 빌드 및 푸시
-      # - 멀티스테이지 빌드 (Dockerfile 사용)
-      # - 레이어 캐싱으로 빌드 속도 향상
+      # - 레이어 캐시 활용 (2-3배 속도 향상)
+      # - Registry 캐시 사용
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -53,16 +59,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          no-cache: true  # 캐시 비활성화 - 소스 변경 강제 반영
-          # cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/festin:latest
-          # cache-to: type=inline
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/festin:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/festin:buildcache,mode=max
 
-      # 6. EC2 서버에 SSH 접속하여 배포
+      # 6. EC2 서버 배포
       # - 최신 이미지 pull
-      # - 기존 컨테이너 중지 및 제거
-      # - 새 이미지로 컨테이너 재시작
-      # - 오래된 이미지 정리
-      # - 헬스체크로 배포 성공 확인
+      # - 컨테이너 재시작
+      # - Health check로 배포 검증
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -76,48 +79,55 @@ jobs:
           script: |
             cd ~/festin
 
-            # Login to Docker Hub
+            # Docker Hub 로그인
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-            # Set Docker image environment variable
+            # 환경 변수 설정
             export DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/festin:latest
-
-            # Pull latest image
-            docker pull $DOCKER_IMAGE
-
-            # Stop and remove existing app container
-            docker stop festin-app || true
-            docker rm festin-app || true
-
-             # Clean up old images
-            docker image prune -af --filter "until=24h"
-
-            # Set environment variables for docker-compose
             export JWT_SECRET=$JWT_SECRET
             export FIREBASE_CREDENTIALS_JSON=$FIREBASE_CREDENTIALS_JSON
 
-            # Start with new image
+            # 최신 이미지 pull
+            docker pull $DOCKER_IMAGE
+
+            # 기존 컨테이너 정리
+            docker stop festin-app || true
+            docker rm festin-app || true
+
+            # 새 이미지로 재시작
             docker-compose -f docker-compose.prod.yml up -d app
 
-            # Health check with retry
-            echo "Waiting for application to be healthy..."
-            MAX_RETRIES=30
+            # Health check (최적화된 간격)
+            echo "🔍 Waiting for application to be healthy..."
+            MAX_RETRIES=20
             RETRY_COUNT=0
+            SLEEP_INTERVAL=3
 
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              sleep 2
-              if curl -f http://localhost:8080/api/health > /dev/null 2>&1; then
-                echo "✓ Application is healthy!"
+              sleep $SLEEP_INTERVAL
+
+              # Custom health endpoint 확인
+              # TODO: Actuator 500 에러 해결 후 /actuator/health로 변경
+              if curl -f -s http://localhost:8080/api/health > /dev/null 2>&1; then
+                echo "✅ Application is healthy!"
+                echo "📊 Health check passed after $((RETRY_COUNT * SLEEP_INTERVAL)) seconds"
                 break
               fi
+
               RETRY_COUNT=$((RETRY_COUNT + 1))
-              echo "Retry $RETRY_COUNT/$MAX_RETRIES..."
+              echo "⏳ Retry $RETRY_COUNT/$MAX_RETRIES..."
             done
 
+            # Health check 실패 시
             if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-              echo "❌ Health check failed after $MAX_RETRIES retries"
+              echo "❌ Health check failed after $((MAX_RETRIES * SLEEP_INTERVAL)) seconds"
+              echo "📋 Application logs:"
               docker logs festin-app --tail 100
               exit 1
             fi
 
-            echo "Deployment completed successfully!"
+            # 오래된 이미지 정리 (24시간 이상된 것만)
+            echo "🧹 Cleaning up old images..."
+            docker image prune -af --filter "until=24h"
+
+            echo "🎉 Deployment completed successfully!"
