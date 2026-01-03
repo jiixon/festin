@@ -125,4 +125,17 @@ public class JpaWaitingAdapter implements WaitingRepositoryPort {
                 .map(waitingMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Waiting> findRecentByStatus(WaitingStatus status, LocalDateTime since) {
+        return waitingJpaRepository.findByStatusAndCalledAtAfter(status, since)
+                .stream()
+                .map(waitingMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public boolean existsByUserIdAndBoothIdAndStatus(Long userId, Long boothId, WaitingStatus status) {
+        return waitingJpaRepository.existsByUserIdAndBoothIdAndStatus(userId, boothId, status);
+    }
 }

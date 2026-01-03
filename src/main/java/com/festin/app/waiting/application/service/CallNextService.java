@@ -19,13 +19,14 @@ import java.time.LocalDateTime;
 /**
  * 다음 사람 호출 Service
  *
- * 해피 케이스 구현:
- * - 부스 정원 검증
- * - Redis 대기열에서 1명 dequeue
- * - MySQL에 Waiting 저장 (CALLED 상태)
- * - 푸시 알림 발송
- * - 사용자 활성 부스 목록에서 제거
- *
+ * MySQL-Redis 정합성 보장 (Soft Lock 방식):
+ * 1. Redis dequeue (즉시 제거, 원자적)
+ * 2. Soft Lock 생성 (temp:calling:{boothId}:{userId}, timestamp 보존)
+ * 3. 활성 부스 목록에서 제거
+ * 4. MySQL save (@Transactional)
+ * 5. 성공 시: Soft Lock 삭제
+ * 6. 실패 시: Soft Lock 남김 (배치가 timestamp로 롤백)
+
  * 참고: 부스 현재 인원(current)은 입장 확인 시점에 +1
  */
 @Service
@@ -71,49 +72,62 @@ public class CallNextService implements CallNextUseCase {
         int currentCount = boothCachePort.getCurrentCount(boothId);
         booth.validateForCalling(currentCount);
 
-        // Redis 대기열에서 다음 사용자 dequeue (userId와 registeredAt을 함께 반환)
+        // Redis 대기열에서 다음 사용자 dequeue
         QueueCachePort.QueueItem queueItem = queueCachePort.dequeue(boothId)
                 .orElseThrow(QueueEmptyException::new);
 
         Long userId = queueItem.userId();
         LocalDateTime registeredAt = queueItem.registeredAt();
 
-        // 사용자 활성 부스 목록에서 제거 (호출되었으므로 대기 상태 종료)
-        queueCachePort.removeUserActiveBooth(userId, boothId);
+        // Soft Lock 생성
+        queueCachePort.createSoftLock(boothId, userId, registeredAt);
 
-        // 호출 순번 계산 (dequeue되었으므로 1번으로 호출됨)
-        int calledPosition = 1;
+        try {
+            // 사용자 활성 부스 목록에서 제거
+            queueCachePort.removeUserActiveBooth(userId, boothId);
 
-        // Waiting 도메인 생성 (CALLED 상태)
-        LocalDateTime calledAt = LocalDateTime.now();
-        Waiting waiting = Waiting.ofCalled(
-                userId,
-                boothId,
-                calledPosition,
-                registeredAt,
-                calledAt
-        );
+            // 호출 순번 계산
+            int calledPosition = 1;
 
-        // DB에 영구 저장
-        Waiting savedWaiting = waitingRepositoryPort.save(waiting);
+            // Waiting 도메인 생성 (CALLED 상태)
+            LocalDateTime calledAt = LocalDateTime.now();
+            Waiting waiting = Waiting.ofCalled(
+                    userId,
+                    boothId,
+                    calledPosition,
+                    registeredAt,
+                    calledAt
+            );
 
-        // 푸시 알림 발송
-        String eventId = "call:" + savedWaiting.getId();
-        NotificationPort.CallNotification notification = new NotificationPort.CallNotification(
-                eventId,
-                userId,
-                boothId,
-                booth.getName(),
-                calledPosition
-        );
-        notificationPort.send(notification);
+            // DB에 영구 저장
+            Waiting savedWaiting = waitingRepositoryPort.save(waiting);
 
-        // 결과 반환
-        return new CallResult(
-                savedWaiting.getId(),
-                userId,
-                calledPosition,
-                calledAt
-        );
+            // 성공: Soft Lock 삭제
+            queueCachePort.deleteSoftLock(boothId, userId);
+
+            // 푸시 알림 발송
+            String eventId = "call:" + savedWaiting.getId();
+            NotificationPort.CallNotification notification = new NotificationPort.CallNotification(
+                    eventId,
+                    userId,
+                    boothId,
+                    booth.getName(),
+                    calledPosition
+            );
+            notificationPort.send(notification);
+
+            // 결과 반환
+            return new CallResult(
+                    savedWaiting.getId(),
+                    userId,
+                    calledPosition,
+                    calledAt
+            );
+
+        } catch (Exception e) {
+            // MySQL 실패: Soft Lock 남김 (배치가 롤백)
+            // Soft Lock은 삭제하지 않음 → SoftLockRecoveryBatch가 감지하여 Redis 롤백
+            throw e;
+        }
     }
 }

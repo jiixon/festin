@@ -116,4 +116,27 @@ public interface WaitingJpaRepository extends JpaRepository<WaitingEntity, Long>
      * @return 타임아웃된 대기 목록
      */
     List<WaitingEntity> findByStatusAndCalledAtBefore(WaitingStatus status, LocalDateTime timeoutThreshold);
+
+    /**
+     * 최근 특정 상태의 대기 목록 조회 (배치 보정용)
+     *
+     * TransactionalEventListener 방식 배치에서 사용
+     *
+     * @param status 상태 (CALLED)
+     * @param since 조회 시작 시각
+     * @return 최근 해당 상태의 대기 목록
+     */
+    List<WaitingEntity> findByStatusAndCalledAtAfter(WaitingStatus status, LocalDateTime since);
+
+    /**
+     * 특정 사용자/부스/상태 존재 여부 확인 (배치 보정용)
+     *
+     * Soft Lock 방식 배치에서 사용
+     *
+     * @param userId 사용자 ID
+     * @param boothId 부스 ID
+     * @param status 상태 (CALLED)
+     * @return 존재 여부
+     */
+    boolean existsByUserIdAndBoothIdAndStatus(Long userId, Long boothId, WaitingStatus status);
 }
