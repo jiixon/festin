@@ -177,4 +177,65 @@ public interface QueueCachePort {
          */
         MAX_BOOTHS_EXCEEDED
     }
+
+    /**
+     * Soft Lock 데이터
+     *
+     * MySQL save 실패 지점을 마킹하기 위한 데이터
+     * - timestamp 보존으로 정확한 위치 복구 가능
+     * - 배치가 Soft Lock을 스캔하여 정합성 보정
+     *
+     * @param boothId 부스 ID
+     * @param userId 사용자 ID
+     * @param registeredAt 원래 등록 시각 (Redis dequeue 시점의 timestamp)
+     * @param createdAt Soft Lock 생성 시각
+     */
+    record SoftLockData(
+            Long boothId,
+            Long userId,
+            LocalDateTime registeredAt,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    /**
+     * Soft Lock 생성
+     *
+     * callNext 실패 지점 마킹:
+     * - Redis dequeue 직후 생성
+     * - MySQL save 실패 시 Soft Lock 남김
+     * - 배치가 Soft Lock 스캔하여 Redis 롤백
+     *
+     * Redis 키: temp:calling:{boothId}:{userId}
+     *
+     * @param boothId 부스 ID
+     * @param userId 사용자 ID
+     * @param registeredAt 원래 등록 시각 (복구 시 사용)
+     */
+    void createSoftLock(Long boothId, Long userId, LocalDateTime registeredAt);
+
+    /**
+     * Soft Lock 삭제
+     *
+     * MySQL save 성공 시 호출:
+     * - 정상 처리 완료 표시
+     * - Soft Lock 제거
+     *
+     * @param boothId 부스 ID
+     * @param userId 사용자 ID
+     */
+    void deleteSoftLock(Long boothId, Long userId);
+
+    /**
+     * Soft Lock 조회
+     *
+     * 배치 보정용:
+     * - Soft Lock 존재 여부 확인
+     * - timestamp 조회하여 Redis 롤백
+     *
+     * @param boothId 부스 ID
+     * @param userId 사용자 ID
+     * @return Soft Lock 데이터, 없으면 empty
+     */
+    Optional<SoftLockData> getSoftLock(Long boothId, Long userId);
 }

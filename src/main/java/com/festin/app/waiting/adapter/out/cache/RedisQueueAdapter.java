@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,6 +39,7 @@ public class RedisQueueAdapter implements QueueCachePort {
     private static final String QUEUE_KEY_PREFIX = "queue:booth:";
     private static final String USER_ACTIVE_BOOTHS_KEY_PREFIX = "user:";
     private static final String USER_ACTIVE_BOOTHS_KEY_SUFFIX = ":active_booths";
+    private static final String SOFT_LOCK_PREFIX = "temp:calling:";
 
     /**
      * 원자적 enqueue Lua Script
@@ -224,5 +227,60 @@ public class RedisQueueAdapter implements QueueCachePort {
                 userId, boothId, status, position, totalWaiting);
 
         return new EnqueueAtomicResult(status, position, totalWaiting);
+    }
+
+    @Override
+    public void createSoftLock(Long boothId, Long userId, LocalDateTime registeredAt) {
+        String key = SOFT_LOCK_PREFIX + boothId + ":" + userId;
+
+        Map<String, String> data = new HashMap<>();
+        data.put("boothId", boothId.toString());
+        data.put("userId", userId.toString());
+        data.put("timestamp", String.valueOf(registeredAt.toEpochSecond(ZoneOffset.UTC)));
+        data.put("createdAt", String.valueOf(System.currentTimeMillis()));
+
+        redisTemplate.opsForHash().putAll(key, data);
+
+        log.debug("Soft Lock 생성 - key: {}, boothId: {}, userId: {}, timestamp: {}",
+                key, boothId, userId, registeredAt.toEpochSecond(ZoneOffset.UTC));
+    }
+
+    @Override
+    public void deleteSoftLock(Long boothId, Long userId) {
+        String key = SOFT_LOCK_PREFIX + boothId + ":" + userId;
+        redisTemplate.delete(key);
+
+        log.debug("Soft Lock 삭제 - key: {}, boothId: {}, userId: {}", key, boothId, userId);
+    }
+
+    @Override
+    public Optional<SoftLockData> getSoftLock(Long boothId, Long userId) {
+        String key = SOFT_LOCK_PREFIX + boothId + ":" + userId;
+
+        Map<Object, Object> data = redisTemplate.opsForHash().entries(key);
+
+        if (data.isEmpty()) {
+            return Optional.empty();
+        }
+
+        try {
+            Long storedBoothId = Long.parseLong((String) data.get("boothId"));
+            Long storedUserId = Long.parseLong((String) data.get("userId"));
+            long timestamp = Long.parseLong((String) data.get("timestamp"));
+            long createdAtMillis = Long.parseLong((String) data.get("createdAt"));
+
+            LocalDateTime registeredAt = LocalDateTime.ofEpochSecond(timestamp, 0, ZoneOffset.UTC);
+            LocalDateTime createdAt = LocalDateTime.ofEpochSecond(
+                    createdAtMillis / 1000,
+                    (int) (createdAtMillis % 1000) * 1_000_000,
+                    ZoneOffset.UTC
+            );
+
+            return Optional.of(new SoftLockData(storedBoothId, storedUserId, registeredAt, createdAt));
+
+        } catch (Exception e) {
+            log.error("Soft Lock 파싱 실패 - key: {}, data: {}", key, data, e);
+            return Optional.empty();
+        }
     }
 }

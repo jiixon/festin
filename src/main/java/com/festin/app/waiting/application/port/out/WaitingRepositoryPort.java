@@ -98,4 +98,29 @@ public interface WaitingRepositoryPort {
      */
     List<Waiting> findTimeoutWaitings(LocalDateTime timeoutThreshold);
 
+    /**
+     * 최근 특정 상태의 대기 목록 조회 (배치 보정용)
+     *
+     * TransactionalEventListener 방식 배치에서 사용:
+     * - CALLED 상태인데 Redis에도 있는 케이스 찾기
+     *
+     * @param status 대기 상태
+     * @param since 조회 시작 시각
+     * @return 해당 상태의 대기 목록
+     */
+    List<Waiting> findRecentByStatus(WaitingStatus status, LocalDateTime since);
+
+    /**
+     * 특정 사용자/부스/상태 존재 여부 확인 (배치 보정용)
+     *
+     * Soft Lock 방식 배치에서 사용:
+     * - MySQL에 CALLED 상태로 저장되었는지 확인
+     *
+     * @param userId 사용자 ID
+     * @param boothId 부스 ID
+     * @param status 대기 상태
+     * @return 존재 여부
+     */
+    boolean existsByUserIdAndBoothIdAndStatus(Long userId, Long boothId, WaitingStatus status);
+
 }
