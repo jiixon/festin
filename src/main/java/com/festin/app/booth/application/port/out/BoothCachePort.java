@@ -1,5 +1,6 @@
 package com.festin.app.booth.application.port.out;
 
+import com.festin.app.booth.domain.model.Booth;
 import com.festin.app.booth.domain.model.BoothStatus;
 
 import java.util.Optional;
@@ -24,6 +25,16 @@ import java.util.Optional;
  *   - status: 운영 상태 (OPEN/CLOSED)
  */
 public interface BoothCachePort {
+
+    /**
+     * 부스 도메인 객체 조회
+     *
+     * Redis 캐시에서 부스 정보를 조회하여 Booth 도메인 객체로 반환
+     *
+     * @param boothId 부스 ID
+     * @return Booth 도메인 객체 (캐시에 없으면 Empty)
+     */
+    Optional<Booth> getBooth(Long boothId);
 
     /**
      * 부스 현재 인원 증가

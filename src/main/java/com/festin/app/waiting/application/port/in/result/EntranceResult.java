@@ -1,5 +1,6 @@
 package com.festin.app.waiting.application.port.in.result;
 
+import com.festin.app.waiting.domain.model.Waiting;
 import com.festin.app.waiting.domain.model.WaitingStatus;
 
 import java.time.LocalDateTime;
@@ -14,4 +15,11 @@ public record EntranceResult(
     WaitingStatus status,
     LocalDateTime enteredAt
 ) {
+    public static EntranceResult from(Waiting waiting) {
+        return new EntranceResult(
+                waiting.getId(),
+                waiting.getStatus(),
+                waiting.getEnteredAt()
+        );
+    }
 }

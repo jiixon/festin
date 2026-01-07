@@ -3,6 +3,7 @@ package com.festin.app.waiting.adapter.in.web.dto;
 import com.festin.app.waiting.application.port.in.result.CalledListResult;
 import com.festin.app.waiting.domain.model.WaitingStatus;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -16,6 +17,10 @@ public record CalledListResponse(
 
     /**
      * CalledListResult → CalledListResponse 변환
+     *
+     * 책임:
+     * - LocalDateTime → ISO-8601 String 포맷팅 (Presentation Layer)
+     * - WaitingStatus enum → String 변환
      */
     public static CalledListResponse from(CalledListResult result) {
         List<CalledItem> items = result.calledList().stream()
@@ -24,8 +29,8 @@ public record CalledListResponse(
                 item.userId(),
                 item.nickname(),
                 item.position(),
-                item.status(),
-                item.calledAt(),
+                item.status().name(),
+                item.calledAt().format(DateTimeFormatter.ISO_DATE_TIME),
                 item.remainingTime()
             ))
             .toList();
@@ -41,7 +46,7 @@ public record CalledListResponse(
         Long userId,
         String nickname,
         int position,
-        WaitingStatus status,
+        String status,
         String calledAt,
         int remainingTime
     ) {}

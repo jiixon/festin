@@ -2,6 +2,7 @@ package com.festin.app.waiting.application.port.in.result;
 
 import com.festin.app.waiting.domain.model.WaitingStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -21,7 +22,7 @@ public record CalledListResult(
      * @param nickname 사용자 닉네임
      * @param position 호출 순번
      * @param status 대기 상태
-     * @param calledAt 호출 시간 (ISO-8601 format)
+     * @param calledAt 호출 시간 (도메인 객체)
      * @param remainingTime 노쇼까지 남은 시간 (초)
      */
     public record CalledItem(
@@ -30,7 +31,7 @@ public record CalledListResult(
         String nickname,
         int position,
         WaitingStatus status,
-        String calledAt,
+        LocalDateTime calledAt,
         int remainingTime
     ) {}
 }

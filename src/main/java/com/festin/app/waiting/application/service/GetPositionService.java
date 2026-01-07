@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 순번 조회 UseCase 구현
  *
  * 비즈니스 흐름:
- * 1. Redis 대기열에서 사용자 위치 조회
+ * 1. 대기열에서 사용자 위치 조회
  * 2. 대기 중이 아니면 예외 발생
  * 3. 전체 대기자 수 계산
  * 4. 예상 대기 시간 계산
@@ -30,18 +30,14 @@ public class GetPositionService implements GetPositionUseCase {
     @Override
     @Transactional(readOnly = true)
     public PositionResult getPosition(Long userId, Long boothId) {
-        // Redis에서 부스 이름 조회
         String boothName = boothCachePort.getName(boothId)
             .orElseThrow(BoothNotFoundException::new);
 
-        // Redis 대기열에서 순번 조회
         Integer position = queueCachePort.getPosition(boothId, userId)
             .orElseThrow(WaitingNotFoundException::new);
 
-        // 전체 대기자 수 조회
         int totalWaiting = queueCachePort.getQueueSize(boothId);
 
-        // 예상 대기 시간 계산
         EstimatedWaitTime estimatedWaitTime = EstimatedWaitTime.fromPosition(position);
 
         return new PositionResult(
