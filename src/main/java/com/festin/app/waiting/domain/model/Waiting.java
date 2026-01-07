@@ -1,6 +1,8 @@
 package com.festin.app.waiting.domain.model;
 
+import com.festin.app.waiting.application.port.in.result.CompleteResult;
 import com.festin.app.waiting.domain.exception.InvalidStatusException;
+import com.festin.app.waiting.domain.exception.WaitingNotFoundException;
 
 import java.time.LocalDateTime;
 
