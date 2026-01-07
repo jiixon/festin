@@ -1,6 +1,7 @@
 package com.festin.app.booth.adapter.out.cache;
 
 import com.festin.app.booth.application.port.out.BoothCachePort;
+import com.festin.app.booth.domain.model.Booth;
 import com.festin.app.booth.domain.model.BoothStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -35,6 +36,19 @@ public class RedisBoothAdapter implements BoothCachePort {
     private static final String FIELD_NAME = "name";
     private static final String FIELD_CAPACITY = "capacity";
     private static final String FIELD_STATUS = "status";
+
+    @Override
+    public Optional<Booth> getBooth(Long boothId) {
+        Optional<BoothStatus> status = getStatus(boothId);
+        Optional<Integer> capacity = getCapacity(boothId);
+        Optional<String> name = getName(boothId);
+
+        if (status.isEmpty() || capacity.isEmpty() || name.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(Booth.of(boothId, name.get(), capacity.get(), status.get()));
+    }
 
     @Override
     public int incrementCurrentCount(Long boothId) {

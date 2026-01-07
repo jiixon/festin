@@ -35,15 +35,8 @@ public class UpdateFcmTokenService implements UpdateFcmTokenUseCase {
         User user = userRepositoryPort.findById(userId)
                 .orElseThrow(() -> UserNotFoundException.of(userId));
 
-        // 새로운 User 객체 생성 (fcmToken 포함)
-        User updatedUser = User.of(
-                user.getId(),
-                user.getEmail(),
-                user.getNickname(),
-                user.getRole(),
-                fcmToken,
-                user.getNotificationEnabled()
-        );
+        // 디바이스 등록 (도메인 로직: 알림 활성화 여부 검증, FCM 토큰 검증)
+        User updatedUser = user.registerDeviceForNotification(fcmToken);
 
         // MySQL에 저장 (영구 저장)
         userRepositoryPort.save(updatedUser);

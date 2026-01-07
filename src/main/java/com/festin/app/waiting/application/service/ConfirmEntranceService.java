@@ -37,29 +37,16 @@ public class ConfirmEntranceService implements ConfirmEntranceUseCase {
 
     @Override
     public EntranceResult confirmEntrance(Long boothId, Long waitingId) {
-        // DB에서 Waiting 조회
-        Waiting waiting = waitingRepositoryPort.findById(waitingId)
-                .orElseThrow(WaitingNotFoundException::new);
+        Waiting waiting = waitingRepositoryPort.findById(waitingId).orElseThrow(WaitingNotFoundException::new);
 
-        // boothId 일치 확인
         if (!waiting.getBoothId().equals(boothId)) {
             throw new WaitingNotFoundException();
         }
 
-        // 도메인 로직 실행 (상태 검증 포함: CALLED → ENTERED)
         waiting.enter();
-
-        // DB 업데이트
-        Waiting updatedWaiting = waitingRepositoryPort.save(waiting);
-
-        // Redis 부스 현재 인원 +1 (실제 입장 시점)
+        Waiting updated = waitingRepositoryPort.save(waiting);
         boothCachePort.incrementCurrentCount(boothId);
 
-        // 결과 반환
-        return new EntranceResult(
-                updatedWaiting.getId(),
-                updatedWaiting.getStatus(),
-                updatedWaiting.getEnteredAt()
-        );
+        return EntranceResult.from(updated);
     }
 }

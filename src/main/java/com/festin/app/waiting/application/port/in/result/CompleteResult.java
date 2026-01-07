@@ -1,6 +1,7 @@
 package com.festin.app.waiting.application.port.in.result;
 
 import com.festin.app.waiting.domain.model.CompletionType;
+import com.festin.app.waiting.domain.model.Waiting;
 import com.festin.app.waiting.domain.model.WaitingStatus;
 
 import java.time.LocalDateTime;
@@ -16,4 +17,12 @@ public record CompleteResult(
     CompletionType completionType,
     LocalDateTime completedAt
 ) {
+    public static CompleteResult from(Waiting waiting) {
+        return new CompleteResult(
+                waiting.getId(),
+                waiting.getStatus(),
+                waiting.getCompletionType(),
+                waiting.getCompletedAt()
+        );
+    }
 }

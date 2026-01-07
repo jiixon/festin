@@ -37,30 +37,16 @@ public class CompleteExperienceService implements CompleteExperienceUseCase {
 
     @Override
     public CompleteResult complete(Long boothId, Long waitingId) {
-        // DB에서 Waiting 조회
-        Waiting waiting = waitingRepositoryPort.findById(waitingId)
-                .orElseThrow(WaitingNotFoundException::new);
+        Waiting waiting = waitingRepositoryPort.findById(waitingId).orElseThrow(WaitingNotFoundException::new);
 
-        // boothId 일치 확인
         if (!waiting.getBoothId().equals(boothId)) {
             throw new WaitingNotFoundException();
         }
 
-        // 도메인 로직 실행 (상태 검증 포함: ENTERED → COMPLETED)
         waiting.complete();
-
-        // DB 업데이트
-        Waiting updatedWaiting = waitingRepositoryPort.save(waiting);
-
-        // Redis 부스 현재 인원 -1 (퇴장 처리)
+        Waiting updated = waitingRepositoryPort.save(waiting);
         boothCachePort.decrementCurrentCount(boothId);
 
-        // 결과 반환
-        return new CompleteResult(
-                updatedWaiting.getId(),
-                updatedWaiting.getStatus(),
-                updatedWaiting.getCompletionType(),
-                updatedWaiting.getCompletedAt()
-        );
+        return CompleteResult.from(updated);
     }
 }

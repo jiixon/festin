@@ -1,5 +1,6 @@
 package com.festin.app.common.jwt;
 
+import com.festin.app.user.application.port.out.TokenGeneratorPort;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -9,8 +10,15 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+/**
+ * JWT 토큰 생성 및 검증 구현체
+ *
+ * TokenGeneratorPort 구현:
+ * - Application Layer는 Port를 통해서만 접근
+ * - JWT 구현 세부사항은 Infrastructure Layer에 격리
+ */
 @Component
-public class JwtTokenProvider {
+public class JwtTokenProvider implements TokenGeneratorPort {
 
     private final SecretKey secretKey;
     private final long expiration;
@@ -21,9 +29,17 @@ public class JwtTokenProvider {
     }
 
     /**
-     * JWT 토큰 생성
+     * JWT 액세스 토큰 생성 (Port 구현)
      */
-    public String generateToken(Long userId, String email, String role) {
+    @Override
+    public String generateAccessToken(Long userId, String email, String role) {
+        return generateToken(userId, email, role);
+    }
+
+    /**
+     * JWT 토큰 생성 (내부 구현)
+     */
+    private String generateToken(Long userId, String email, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
 

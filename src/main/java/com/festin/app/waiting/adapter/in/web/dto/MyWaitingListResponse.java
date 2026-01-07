@@ -2,6 +2,7 @@ package com.festin.app.waiting.adapter.in.web.dto;
 
 import com.festin.app.waiting.application.port.in.result.MyWaitingListResult;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -31,9 +32,9 @@ public record MyWaitingListResponse(
     /**
      * Result → Response 변환
      *
-     * WaitingStatus 변환 규칙:
-     * - null → "WAITING" (Redis 대기열)
-     * - CALLED → "CALLED" (MySQL 저장)
+     * 책임:
+     * - WaitingStatus enum → String 변환 (null → "WAITING", CALLED → "CALLED")
+     * - LocalDateTime → ISO-8601 String 포맷팅 (Presentation Layer)
      */
     public static MyWaitingListResponse from(MyWaitingListResult result) {
         List<WaitingItemResponse> items = result.waitings().stream()
@@ -44,7 +45,7 @@ public record MyWaitingListResponse(
                         item.totalWaiting(),
                         item.estimatedWaitTime(),
                         item.status() == null ? "WAITING" : item.status().name(),
-                        item.registeredAt()
+                        item.registeredAt().format(DateTimeFormatter.ISO_DATE_TIME)
                 ))
                 .toList();
 

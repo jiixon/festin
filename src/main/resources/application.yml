@@ -32,3 +32,6 @@ management:
 
 firebase:
   enabled: true
+
+cors:
+  allowed-origins: http://localhost:3000

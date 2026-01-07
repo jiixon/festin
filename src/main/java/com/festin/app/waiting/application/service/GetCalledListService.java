@@ -5,13 +5,12 @@ import com.festin.app.waiting.application.port.in.result.CalledListResult;
 import com.festin.app.waiting.application.port.in.result.CalledListResult.CalledItem;
 import com.festin.app.waiting.application.port.out.WaitingRepositoryPort;
 import com.festin.app.waiting.application.port.out.dto.CalledWaitingInfo;
+import com.festin.app.waiting.domain.policy.NoShowPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -19,25 +18,21 @@ import java.util.List;
  *
  * 책임:
  * - 부스의 호출된 대기 목록 조회
- * - 각 대기 건의 남은 시간 계산 (노쇼 타임아웃 기준)
+ * - NoShowPolicy를 통한 남은 시간 계산
  */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class GetCalledListService implements GetCalledListUseCase {
 
-    /**
-     * 노쇼 타임아웃 (5분)
-     */
-    private static final int NO_SHOW_TIMEOUT_SECONDS = 5 * 60;
-
     private final WaitingRepositoryPort waitingRepositoryPort;
+    private final NoShowPolicy noShowPolicy;
 
     /**
      * 부스의 호출된 대기 목록 조회
      *
      * 1. 호출된 대기 목록 조회 (User 정보 포함)
-     * 2. 각 대기 건의 남은 시간 계산
+     * 2. NoShowPolicy를 통한 남은 시간 계산
      * 3. Result 변환
      *
      * @param boothId 부스 ID
@@ -49,15 +44,12 @@ public class GetCalledListService implements GetCalledListUseCase {
         List<CalledWaitingInfo> calledWaitings =
             waitingRepositoryPort.findCalledByBoothIdWithUserInfo(boothId);
 
-        // 2. 남은 시간 계산 및 Result 변환
+        // 2. NoShowPolicy를 통한 남은 시간 계산 및 Result 변환
         LocalDateTime now = LocalDateTime.now();
         List<CalledItem> items = calledWaitings.stream()
             .map(info -> {
-                // 경과 시간 계산 (초)
-                long elapsedSeconds = ChronoUnit.SECONDS.between(info.calledAt(), now);
-
-                // 남은 시간 = max(0, 타임아웃 - 경과시간)
-                int remainingSeconds = Math.max(0, NO_SHOW_TIMEOUT_SECONDS - (int) elapsedSeconds);
+                // Domain Policy를 통한 남은 시간 계산
+                int remainingSeconds = noShowPolicy.calculateRemainingTime(info.calledAt(), now);
 
                 return new CalledItem(
                     info.waitingId(),
@@ -65,7 +57,7 @@ public class GetCalledListService implements GetCalledListUseCase {
                     info.nickname(),
                     info.position(),
                     info.status(),
-                    info.calledAt().format(DateTimeFormatter.ISO_DATE_TIME),
+                    info.calledAt(),
                     remainingSeconds
                 );
             })

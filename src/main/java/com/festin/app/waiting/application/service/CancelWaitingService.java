@@ -24,15 +24,11 @@ public class CancelWaitingService implements CancelWaitingUseCase {
 
     @Override
     public void cancel(Long userId, Long boothId) {
-        // 대기열에 있는지 확인
         if (queueCachePort.getPosition(boothId, userId).isEmpty()) {
             throw WaitingNotFoundException.notInQueue(userId, boothId);
         }
 
-        // Redis 대기열에서 제거
         queueCachePort.remove(boothId, userId);
-
-        // 사용자 활성 부스 목록에서 제거
         queueCachePort.removeUserActiveBooth(userId, boothId);
     }
 }
