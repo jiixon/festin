@@ -15,6 +15,8 @@ public enum ErrorCode {
     // 400 Bad Request
     INVALID_STATUS(400, "INVALID_STATUS", "잘못된 상태입니다."),
     INVALID_REQUEST(400, "INVALID_REQUEST", "잘못된 요청입니다."),
+    INVALID_FCM_TOKEN(400, "INVALID_FCM_TOKEN", "FCM 토큰이 유효하지 않습니다."),
+    NOTIFICATION_DISABLED(400, "NOTIFICATION_DISABLED", "알림이 비활성화되어 있습니다."),
 
     // 404 Not Found
     BOOTH_NOT_FOUND(404, "BOOTH_NOT_FOUND", "부스를 찾을 수 없습니다."),
