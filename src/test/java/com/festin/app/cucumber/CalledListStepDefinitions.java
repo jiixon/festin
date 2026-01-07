@@ -4,7 +4,6 @@ import com.festin.app.fixture.UserFixture;
 import com.festin.app.fixture.WaitingFixtureBuilder;
 import com.festin.app.waiting.adapter.in.web.dto.CalledListResponse;
 import com.festin.app.waiting.domain.model.CompletionType;
-import com.festin.app.waiting.domain.model.WaitingStatus;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -132,8 +131,8 @@ public class CalledListStepDefinitions {
 
     @And("첫 번째 항목의 상태는 {string}이다")
     public void firstItemStatusIs(String expectedStatus) {
-        WaitingStatus actualStatus = testContext.getCalledListResponse().calledList().get(0).status();
-        assertThat(actualStatus).isEqualTo(WaitingStatus.valueOf(expectedStatus));
+        String actualStatus = testContext.getCalledListResponse().calledList().get(0).status();
+        assertThat(actualStatus).isEqualTo(expectedStatus);
     }
 
     @And("첫 번째 항목의 남은 시간은 약 {int}초이다")
