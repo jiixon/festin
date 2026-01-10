@@ -90,12 +90,19 @@ jobs:
             # 최신 이미지 pull
             docker pull $DOCKER_IMAGE
 
-            # 기존 컨테이너 정리
+            # Redis/RabbitMQ 먼저 실행 (이미 실행 중이면 스킵)
+            docker-compose -f docker-compose.prod.yml up -d redis rabbitmq
+
+            # Redis/RabbitMQ 헬스체크 대기
+            echo "⏳ Waiting for Redis and RabbitMQ to be healthy..."
+            sleep 5
+
+            # 기존 app 컨테이너만 정리 (Redis/RabbitMQ는 유지)
             docker stop festin-app || true
             docker rm festin-app || true
 
-            # 새 이미지로 재시작
-            docker-compose -f docker-compose.prod.yml up -d app
+            # 새 app 이미지로 재시작 (--no-deps로 의존성 서비스 재시작 방지)
+            docker-compose -f docker-compose.prod.yml up -d --no-deps app
 
             # Health check (최적화된 간격)
             echo "🔍 Waiting for application to be healthy..."
