@@ -34,7 +34,7 @@ public class LoginStepDefinitions {
                 .baseUrl("http://localhost:" + port)
                 .build();
 
-        LoginRequest request = new LoginRequest(email, nickname, role);
+        LoginRequest request = new LoginRequest(email, nickname, role, null);
 
         loginResponse = client.post()
                 .uri("/api/v1/auth/login")

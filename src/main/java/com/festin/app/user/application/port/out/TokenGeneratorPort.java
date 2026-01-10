@@ -18,7 +18,8 @@ public interface TokenGeneratorPort {
      * @param userId 사용자 ID
      * @param email 이메일
      * @param role 역할
+     * @param managedBoothId 관리 부스 ID (STAFF인 경우, nullable)
      * @return 액세스 토큰
      */
-    String generateAccessToken(Long userId, String email, String role);
+    String generateAccessToken(Long userId, String email, String role, Long managedBoothId);
 }

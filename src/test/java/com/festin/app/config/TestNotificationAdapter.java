@@ -1,32 +1,34 @@
-package com.festin.app.waiting.adapter.out.notification;
+package com.festin.app.config;
 
-import com.festin.app.common.config.NotificationQueueConfig;
 import com.festin.app.waiting.application.port.out.NotificationPort;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 /**
- * RabbitMQ 알림 Adapter
+ * 테스트용 Notification Adapter
  *
- * NotificationPort 구현체로, RabbitMQ에 알림 메시지를 발행합니다.
- * 실제 FCM 발송은 FcmNotificationConsumer가 처리합니다.
+ * 테스트 전용 큐로 메시지를 발송하여 festin-app과의 충돌 방지
  */
-@Slf4j
+@Primary
 @Component
-@Profile("!test")
-@RequiredArgsConstructor
-public class RabbitMqNotificationAdapter implements NotificationPort {
+public class TestNotificationAdapter implements NotificationPort {
+
+    private static final Logger log = LoggerFactory.getLogger(TestNotificationAdapter.class);
 
     private final RabbitTemplate rabbitTemplate;
+
+    public TestNotificationAdapter(RabbitTemplate rabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
     @Override
     public void send(NotificationCommand command) {
         try {
             rabbitTemplate.convertAndSend(
-                    NotificationQueueConfig.NOTIFICATION_QUEUE,
+                    TestRabbitMQConfig.TEST_NOTIFICATION_QUEUE,
                     command
             );
 
@@ -40,7 +42,7 @@ public class RabbitMqNotificationAdapter implements NotificationPort {
     private void logPublished(NotificationCommand command) {
         switch (command) {
             case CallNotification notification ->
-                    log.info("RabbitMQ에 호출 알림 발행 - userId: {}, boothId: {}, position: {}",
+                    log.info("[테스트] RabbitMQ에 호출 알림 발행 - userId: {}, boothId: {}, position: {}",
                             notification.userId(),
                             notification.boothId(),
                             notification.calledPosition());
@@ -50,7 +52,7 @@ public class RabbitMqNotificationAdapter implements NotificationPort {
     private void logPublishError(NotificationCommand command, Exception e) {
         switch (command) {
             case CallNotification notification ->
-                    log.error("RabbitMQ 메시지 발행 실패 - userId: {}, boothId: {}, error: {}",
+                    log.error("[테스트] RabbitMQ 메시지 발행 실패 - userId: {}, boothId: {}, error: {}",
                             notification.userId(),
                             notification.boothId(),
                             e.getMessage(),

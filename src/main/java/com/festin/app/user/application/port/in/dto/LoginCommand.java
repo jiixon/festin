@@ -5,6 +5,7 @@ import com.festin.app.user.domain.model.Role;
 public record LoginCommand(
         String email,
         String nickname,
-        Role role
+        Role role,
+        Long managedBoothId  // STAFF 전용 (optional)
 ) {
 }

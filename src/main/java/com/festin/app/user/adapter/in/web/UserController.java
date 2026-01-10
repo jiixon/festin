@@ -1,5 +1,6 @@
 package com.festin.app.user.adapter.in.web;
 
+import com.festin.app.common.security.AuthenticatedUserId;
 import com.festin.app.user.adapter.in.web.dto.UpdateFcmTokenRequest;
 import com.festin.app.user.adapter.in.web.dto.UpdateFcmTokenResponse;
 import com.festin.app.user.application.port.in.UpdateFcmTokenUseCase;
@@ -31,7 +32,7 @@ public class UserController {
      */
     @PostMapping("/fcm-token")
     public ResponseEntity<UpdateFcmTokenResponse> updateFcmToken(
-            @RequestHeader("X-User-Id") Long userId,
+            @AuthenticatedUserId Long userId,
             @RequestBody UpdateFcmTokenRequest request
     ) {
         updateFcmTokenUseCase.updateFcmToken(request.toCommand(userId));

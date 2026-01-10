@@ -18,6 +18,12 @@ public enum ErrorCode {
     INVALID_FCM_TOKEN(400, "INVALID_FCM_TOKEN", "FCM 토큰이 유효하지 않습니다."),
     NOTIFICATION_DISABLED(400, "NOTIFICATION_DISABLED", "알림이 비활성화되어 있습니다."),
 
+    // 401 Unauthorized
+    UNAUTHORIZED(401, "UNAUTHORIZED", "인증이 필요합니다."),
+
+    // 403 Forbidden
+    FORBIDDEN(403, "FORBIDDEN", "접근 권한이 없습니다."),
+
     // 404 Not Found
     BOOTH_NOT_FOUND(404, "BOOTH_NOT_FOUND", "부스를 찾을 수 없습니다."),
     USER_NOT_FOUND(404, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다."),

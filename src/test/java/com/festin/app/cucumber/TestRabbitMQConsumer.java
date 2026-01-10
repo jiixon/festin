@@ -1,6 +1,9 @@
 package com.festin.app.cucumber;
 
+import com.festin.app.config.TestRabbitMQConfig;
 import com.festin.app.waiting.application.port.out.NotificationPort.NotificationCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -8,10 +11,13 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * 테스트용 RabbitMQ Consumer
- * 발행된 메시지를 실제로 받을 수 있는지 확인
+ *
+ * 테스트 전용 큐를 사용하여 festin-app과의 메시지 충돌 방지
  */
 @Component
 public class TestRabbitMQConsumer {
+
+    private static final Logger log = LoggerFactory.getLogger(TestRabbitMQConsumer.class);
 
     private String lastMessage;
     private NotificationCommand lastNotification;
@@ -20,12 +26,14 @@ public class TestRabbitMQConsumer {
 
     @RabbitListener(queues = "test-queue")
     public void listen(String message) {
+        log.info("[TestRabbitMQConsumer] 메시지 수신: {}", message);
         this.lastMessage = message;
         latch.countDown();
     }
 
-    @RabbitListener(queues = "booth-call-notifications")
+    @RabbitListener(queues = TestRabbitMQConfig.TEST_NOTIFICATION_QUEUE)
     public void listenNotification(NotificationCommand notification) {
+        log.info("[TestRabbitMQConsumer] 알림 메시지 수신: {}", notification);
         this.lastNotification = notification;
         notificationLatch.countDown();
     }

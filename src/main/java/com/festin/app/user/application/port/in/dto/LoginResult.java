@@ -7,6 +7,7 @@ public record LoginResult(
         Long userId,
         String email,
         String nickname,
-        Role role
+        Role role,
+        Long managedBoothId
 ) {
 }

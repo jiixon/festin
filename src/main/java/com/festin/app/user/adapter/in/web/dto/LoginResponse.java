@@ -7,7 +7,8 @@ public record LoginResponse(
         Long userId,
         String email,
         String nickname,
-        String role
+        String role,
+        Long managedBoothId
 ) {
     public static LoginResponse from(LoginResult result) {
         return new LoginResponse(
@@ -15,7 +16,8 @@ public record LoginResponse(
                 result.userId(),
                 result.email(),
                 result.nickname(),
-                result.role().name()
+                result.role().name(),
+                result.managedBoothId()
         );
     }
 }
