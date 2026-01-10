@@ -1,5 +1,6 @@
 package com.festin.app.waiting.adapter.in.web;
 
+import com.festin.app.common.security.AuthenticatedUserId;
 import com.festin.app.waiting.adapter.in.web.dto.CallNextRequest;
 import com.festin.app.waiting.adapter.in.web.dto.CallNextResponse;
 import com.festin.app.waiting.adapter.in.web.dto.EnqueueRequest;
@@ -47,13 +48,13 @@ public class WaitingController {
      *
      * POST /api/v1/waitings
      *
-     * @param userId 사용자 ID (임시로 헤더로 받음, 추후 JWT 인증으로 대체)
+     * @param userId 사용자 ID (JWT 토큰에서 추출)
      * @param request 대기 등록 요청
      * @return 201 Created - 대기 등록 결과
      */
     @PostMapping
     public ResponseEntity<EnqueueResponse> enqueue(
-        @RequestHeader("X-User-Id") Long userId,
+        @AuthenticatedUserId Long userId,
         @RequestBody EnqueueRequest request
     ) {
         EnqueueCommand command = new EnqueueCommand(userId, request.getBoothId());
@@ -74,7 +75,7 @@ public class WaitingController {
      */
     @GetMapping("/my")
     public ResponseEntity<MyWaitingListResponse> getMyWaitingList(
-        @RequestHeader("X-User-Id") Long userId
+        @AuthenticatedUserId Long userId
     ) {
         MyWaitingListResult result = getMyWaitingListUseCase.getMyWaitingList(userId);
 
@@ -92,7 +93,7 @@ public class WaitingController {
      */
     @GetMapping("/booth/{boothId}")
     public ResponseEntity<PositionResponse> getPosition(
-        @RequestHeader("X-User-Id") Long userId,
+        @AuthenticatedUserId Long userId,
         @PathVariable Long boothId
     ) {
         PositionResult result = getPositionUseCase.getPosition(userId, boothId);
@@ -111,7 +112,7 @@ public class WaitingController {
      */
     @DeleteMapping("/{boothId}")
     public ResponseEntity<Void> cancelWaiting(
-        @RequestHeader("X-User-Id") Long userId,
+        @AuthenticatedUserId Long userId,
         @PathVariable Long boothId
     ) {
         cancelWaitingUseCase.cancel(userId, boothId);
@@ -126,6 +127,8 @@ public class WaitingController {
      *
      * @param request 호출 요청 (boothId 포함)
      * @return 200 OK - 호출 결과 (waitingId, userId, position, calledAt)
+     *
+     * TODO: JWT에서 boothId를 추출하여 권한 검증 추가 예정
      */
     @PostMapping("/call")
     public ResponseEntity<CallNextResponse> callNext(

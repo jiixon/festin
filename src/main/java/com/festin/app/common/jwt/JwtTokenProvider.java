@@ -32,25 +32,30 @@ public class JwtTokenProvider implements TokenGeneratorPort {
      * JWT 액세스 토큰 생성 (Port 구현)
      */
     @Override
-    public String generateAccessToken(Long userId, String email, String role) {
-        return generateToken(userId, email, role);
+    public String generateAccessToken(Long userId, String email, String role, Long managedBoothId) {
+        return generateToken(userId, email, role, managedBoothId);
     }
 
     /**
      * JWT 토큰 생성 (내부 구현)
      */
-    private String generateToken(Long userId, String email, String role) {
+    private String generateToken(Long userId, String email, String role, Long managedBoothId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("email", email)
                 .claim("role", role)
                 .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(secretKey)
-                .compact();
+                .expiration(expiryDate);
+
+        // STAFF인 경우 boothId 추가
+        if (managedBoothId != null) {
+            builder.claim("boothId", managedBoothId);
+        }
+
+        return builder.signWith(secretKey).compact();
     }
 
     /**
@@ -86,5 +91,14 @@ public class JwtTokenProvider implements TokenGeneratorPort {
     public String getRoleFromToken(String token) {
         Claims claims = validateAndGetClaims(token);
         return claims.get("role", String.class);
+    }
+
+    /**
+     * 토큰에서 boothId 추출 (STAFF 전용)
+     */
+    public Long getBoothIdFromToken(String token) {
+        Claims claims = validateAndGetClaims(token);
+        Integer boothId = claims.get("boothId", Integer.class);
+        return boothId != null ? boothId.longValue() : null;
     }
 }

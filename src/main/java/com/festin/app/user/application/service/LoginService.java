@@ -30,19 +30,28 @@ public class LoginService implements LoginUseCase {
         // Email로 사용자 조회 (Upsert)
         User user = userRepositoryPort.findByEmail(command.email())
                 .map(existingUser -> {
-                    // 기존 사용자: 닉네임 업데이트
+                    // 기존 사용자: 닉네임과 managedBoothId 업데이트
                     return User.of(
                             existingUser.getId(),
                             existingUser.getEmail(),
                             command.nickname(),  // 닉네임 업데이트
                             existingUser.getRole(),
                             existingUser.getFcmToken(),
-                            existingUser.getNotificationEnabled()
+                            existingUser.getNotificationEnabled(),
+                            command.managedBoothId() != null ? command.managedBoothId() : existingUser.getManagedBoothId()
                     );
                 })
                 .orElseGet(() -> {
                     // 신규 사용자: 자동 회원가입
-                    return User.of(null, command.email(), command.nickname(), command.role());
+                    return User.of(
+                            null,
+                            command.email(),
+                            command.nickname(),
+                            command.role(),
+                            null,
+                            true,
+                            command.managedBoothId()
+                    );
                 });
 
         // 저장
@@ -52,7 +61,8 @@ public class LoginService implements LoginUseCase {
         String accessToken = tokenGeneratorPort.generateAccessToken(
                 savedUser.getId(),
                 savedUser.getEmail(),
-                savedUser.getRole().name()
+                savedUser.getRole().name(),
+                savedUser.getManagedBoothId()
         );
 
         return new LoginResult(
@@ -60,7 +70,8 @@ public class LoginService implements LoginUseCase {
                 savedUser.getId(),
                 savedUser.getEmail(),
                 savedUser.getNickname(),
-                savedUser.getRole()
+                savedUser.getRole(),
+                savedUser.getManagedBoothId()
         );
     }
 }

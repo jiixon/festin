@@ -1,5 +1,6 @@
 package com.festin.app.cucumber;
 
+import com.festin.app.fixture.JwtTokenFixture;
 import com.festin.app.waiting.adapter.in.web.dto.MyWaitingListResponse;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
@@ -27,6 +28,9 @@ public class MyWaitingListStepDefinitions {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Autowired
+    private JwtTokenFixture jwtTokenFixture;
 
     @Autowired
     private TestContext testContext;
@@ -69,10 +73,11 @@ public class MyWaitingListStepDefinitions {
                 .build();
 
         Long userId = testContext.getUserMap().get(username);
+        String jwtToken = jwtTokenFixture.generateDefaultVisitorToken(userId);
 
         MyWaitingListResponse response = webTestClient.get()
                 .uri("/api/v1/waitings/my")
-                .header("X-User-Id", String.valueOf(userId))
+                .header("Authorization", "Bearer " + jwtToken)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(MyWaitingListResponse.class)

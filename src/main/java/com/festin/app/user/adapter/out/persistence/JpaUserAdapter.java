@@ -38,7 +38,11 @@ public class JpaUserAdapter implements UserRepositoryPort {
 
         if (user.getId() == null) {
             // 신규 사용자 생성
-            entity = new UserEntity(user.getEmail(), user.getNickname(), user.getRole());
+            if (user.getManagedBoothId() != null) {
+                entity = new UserEntity(user.getEmail(), user.getNickname(), user.getRole(), user.getManagedBoothId());
+            } else {
+                entity = new UserEntity(user.getEmail(), user.getNickname(), user.getRole());
+            }
         } else {
             // 기존 사용자 업데이트
             entity = userJpaRepository.findById(user.getId())
@@ -46,6 +50,9 @@ public class JpaUserAdapter implements UserRepositoryPort {
             entity.updateNickname(user.getNickname());
             if (user.getFcmToken() != null) {
                 entity.updateFcmToken(user.getFcmToken());
+            }
+            if (user.getManagedBoothId() != null) {
+                entity.updateManagedBoothId(user.getManagedBoothId());
             }
         }
 
@@ -60,7 +67,8 @@ public class JpaUserAdapter implements UserRepositoryPort {
                 entity.getNickname(),
                 entity.getRole(),
                 entity.getFcmToken(),
-                entity.getNotificationEnabled()
+                entity.getNotificationEnabled(),
+                entity.getManagedBoothId()
         );
     }
 }

@@ -1,5 +1,6 @@
 package com.festin.app.cucumber;
 
+import com.festin.app.fixture.JwtTokenFixture;
 import com.festin.app.fixture.UserFixture;
 import com.festin.app.user.adapter.in.web.dto.UpdateFcmTokenRequest;
 import com.festin.app.user.adapter.in.web.dto.UpdateFcmTokenResponse;
@@ -30,6 +31,9 @@ public class FcmTokenStepDefinitions {
     private UserFixture userFixture;
 
     @Autowired
+    private JwtTokenFixture jwtTokenFixture;
+
+    @Autowired
     private UserJpaRepository userJpaRepository;
 
     @Autowired
@@ -55,10 +59,11 @@ public class FcmTokenStepDefinitions {
                 .build();
 
         UpdateFcmTokenRequest request = new UpdateFcmTokenRequest(fcmToken);
+        String jwtToken = jwtTokenFixture.generateDefaultVisitorToken(userId);
 
         UpdateFcmTokenResponse response = client.post()
                 .uri("/api/v1/users/fcm-token")
-                .header("X-User-Id", userId.toString())
+                .header("Authorization", "Bearer " + jwtToken)
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isOk()
@@ -110,10 +115,11 @@ public class FcmTokenStepDefinitions {
                 .build();
 
         UpdateFcmTokenRequest request = new UpdateFcmTokenRequest("device_b_token");
+        String jwtToken = jwtTokenFixture.generateDefaultVisitorToken(userId);
 
         UpdateFcmTokenResponse response = client.post()
                 .uri("/api/v1/users/fcm-token")
-                .header("X-User-Id", userId.toString())
+                .header("Authorization", "Bearer " + jwtToken)
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isOk()
@@ -159,10 +165,11 @@ public class FcmTokenStepDefinitions {
                 .build();
 
         UpdateFcmTokenRequest request = new UpdateFcmTokenRequest("test_token");
+        String jwtToken = jwtTokenFixture.generateDefaultVisitorToken(nonExistentUserId);
 
         client.post()
                 .uri("/api/v1/users/fcm-token")
-                .header("X-User-Id", nonExistentUserId.toString())
+                .header("Authorization", "Bearer " + jwtToken)
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isNotFound();

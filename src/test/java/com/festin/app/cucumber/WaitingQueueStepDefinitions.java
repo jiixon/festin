@@ -1,6 +1,7 @@
 package com.festin.app.cucumber;
 
 import com.festin.app.fixture.BoothFixture;
+import com.festin.app.fixture.JwtTokenFixture;
 import com.festin.app.fixture.UserFixture;
 import com.festin.app.university.adapter.out.persistence.entity.UniversityEntity;
 import com.festin.app.university.adapter.out.persistence.repository.UniversityJpaRepository;
@@ -35,6 +36,9 @@ public class WaitingQueueStepDefinitions {
 
     @Autowired
     private BoothFixture boothFixture;
+
+    @Autowired
+    private JwtTokenFixture jwtTokenFixture;
 
     @Autowired
     private UniversityJpaRepository universityRepository;
@@ -83,7 +87,7 @@ public class WaitingQueueStepDefinitions {
 
     @Given("사용자가 로그인되어 있다")
     public void userIsLoggedIn() {
-        // X-User-Id 헤더로 인증을 대체하므로 별도 작업 불필요
+        // JWT 토큰 기반 인증
     }
 
     @When("사용자가 부스에 대기 등록을 요청한다")
@@ -93,10 +97,11 @@ public class WaitingQueueStepDefinitions {
                 .build();
 
         Map<String, Object> requestBody = Map.of("boothId", testBoothId);
+        String jwtToken = jwtTokenFixture.generateDefaultVisitorToken(testUserId);
 
         lastResponse = client.post()
                 .uri("/api/v1/waitings")
-                .header("X-User-Id", testUserId.toString())
+                .header("Authorization", "Bearer " + jwtToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .exchange();
@@ -148,9 +153,11 @@ public class WaitingQueueStepDefinitions {
                 .baseUrl("http://localhost:" + port)
                 .build();
 
+        String jwtToken = jwtTokenFixture.generateDefaultVisitorToken(testUserId);
+
         lastResponse = client.get()
                 .uri("/api/v1/waitings/booth/" + testBoothId)
-                .header("X-User-Id", testUserId.toString())
+                .header("Authorization", "Bearer " + jwtToken)
                 .exchange();
 
         lastResponseBody = lastResponse
@@ -171,9 +178,11 @@ public class WaitingQueueStepDefinitions {
                 .baseUrl("http://localhost:" + port)
                 .build();
 
+        String jwtToken = jwtTokenFixture.generateDefaultVisitorToken(testUserId);
+
         lastResponse = client.delete()
                 .uri("/api/v1/waitings/" + testBoothId)
-                .header("X-User-Id", testUserId.toString())
+                .header("Authorization", "Bearer " + jwtToken)
                 .exchange();
     }
 
@@ -212,11 +221,18 @@ public class WaitingQueueStepDefinitions {
                 "boothId", testBoothId
         );
 
+        // 스태프 JWT 토큰 생성 (임의의 스태프 ID 사용)
+        String staffToken = jwtTokenFixture.generateDefaultStaffToken(99999L);
+
         lastResponse = client.post()
                 .uri("/api/v1/waitings/call")
+                .header("Authorization", "Bearer " + staffToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .exchange();
+
+        // API 성공 여부 확인
+        lastResponse.expectStatus().isOk();
 
         lastResponseBody = lastResponse
                 .expectBody(Map.class)
@@ -276,8 +292,12 @@ public class WaitingQueueStepDefinitions {
                 .baseUrl("http://localhost:" + port)
                 .build();
 
+        // 스태프 JWT 토큰 생성
+        String staffToken = jwtTokenFixture.generateDefaultStaffToken(99999L);
+
         lastResponse = client.post()
                 .uri("/api/v1/booths/" + testBoothId + "/entrance/" + lastWaitingId)
+                .header("Authorization", "Bearer " + staffToken)
                 .exchange();
 
         lastResponseBody = lastResponse
@@ -313,8 +333,12 @@ public class WaitingQueueStepDefinitions {
                 .baseUrl("http://localhost:" + port)
                 .build();
 
+        // 스태프 JWT 토큰 생성
+        String staffToken = jwtTokenFixture.generateDefaultStaffToken(99999L);
+
         lastResponse = client.post()
                 .uri("/api/v1/booths/" + testBoothId + "/complete/" + lastWaitingId)
+                .header("Authorization", "Bearer " + staffToken)
                 .exchange();
 
         lastResponseBody = lastResponse

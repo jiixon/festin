@@ -18,22 +18,28 @@ public class User {
     private final Role role;
     private final String fcmToken;
     private final Boolean notificationEnabled;
+    private final Long managedBoothId;
 
-    private User(Long id, String email, String nickname, Role role, String fcmToken, Boolean notificationEnabled) {
+    private User(Long id, String email, String nickname, Role role, String fcmToken, Boolean notificationEnabled, Long managedBoothId) {
         this.id = id;
         this.email = email;
         this.nickname = nickname;
         this.role = role;
         this.fcmToken = fcmToken;
         this.notificationEnabled = notificationEnabled;
+        this.managedBoothId = managedBoothId;
     }
 
     public static User of(Long id, String email, String nickname, Role role) {
-        return new User(id, email, nickname, role, null, true);
+        return new User(id, email, nickname, role, null, true, null);
     }
 
     public static User of(Long id, String email, String nickname, Role role, String fcmToken, Boolean notificationEnabled) {
-        return new User(id, email, nickname, role, fcmToken, notificationEnabled);
+        return new User(id, email, nickname, role, fcmToken, notificationEnabled, null);
+    }
+
+    public static User of(Long id, String email, String nickname, Role role, String fcmToken, Boolean notificationEnabled, Long managedBoothId) {
+        return new User(id, email, nickname, role, fcmToken, notificationEnabled, managedBoothId);
     }
 
     /**
@@ -65,7 +71,8 @@ public class User {
                 this.nickname,
                 this.role,
                 fcmToken,
-                this.notificationEnabled
+                this.notificationEnabled,
+                this.managedBoothId
         );
     }
 
@@ -103,5 +110,9 @@ public class User {
 
     public Boolean getNotificationEnabled() {
         return notificationEnabled;
+    }
+
+    public Long getManagedBoothId() {
+        return managedBoothId;
     }
 }
