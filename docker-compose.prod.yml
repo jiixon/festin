@@ -35,7 +35,7 @@ services:
       - festin-network
 
   app:
-    image: ${DOCKER_IMAGE:-festin-app:latest}
+    image: ${DOCKER_IMAGE}
     container_name: festin-app
     depends_on:
       redis:
