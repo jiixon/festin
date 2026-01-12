@@ -101,6 +101,10 @@ jobs:
             docker stop festin-app || true
             docker rm festin-app || true
 
+            # 오래된 로컬 빌드 이미지 삭제 (Docker Hub 이미지를 사용하도록 강제)
+            docker rmi festin_app:latest || true
+            docker rmi festin_app || true
+
             # 새 app 이미지로 재시작 (--no-deps로 의존성 서비스 재시작 방지)
             docker-compose -f docker-compose.prod.yml up -d --no-deps app
 
