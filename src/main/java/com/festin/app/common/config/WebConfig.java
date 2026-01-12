@@ -23,7 +23,11 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOriginPatterns("http://localhost:*", "https://*.festin.shop")
+                .allowedOriginPatterns(
+                        "http://localhost:*",
+                        "https://*.festin.shop",
+                        "https://*.vercel.app"  // Vercel 프리뷰/프로덕션 도메인
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
