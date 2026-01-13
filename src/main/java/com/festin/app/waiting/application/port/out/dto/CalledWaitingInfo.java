@@ -13,11 +13,12 @@ import java.time.LocalDateTime;
  * - Domain 모델(Waiting)은 userId만 가지므로, 조회 시 JOIN FETCH로 User 정보 포함
  */
 public record CalledWaitingInfo(
-    Long waitingId,
-    Long userId,
-    String nickname,
-    int position,
-    WaitingStatus status,
-    LocalDateTime calledAt
-) {
+        Long waitingId,
+        Long userId,
+        String nickname,
+        Long boothId,
+        int position,
+        WaitingStatus status,
+        LocalDateTime calledAt,
+        LocalDateTime enteredAt) {
 }

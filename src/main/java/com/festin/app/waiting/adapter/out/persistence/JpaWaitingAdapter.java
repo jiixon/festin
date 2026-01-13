@@ -73,7 +73,7 @@ public class JpaWaitingAdapter implements WaitingRepositoryPort {
     @Override
     public Optional<Waiting> findById(Long waitingId) {
         return waitingJpaRepository.findById(waitingId)
-            .map(waitingMapper::toDomain);
+                .map(waitingMapper::toDomain);
     }
 
     @Override
@@ -105,17 +105,18 @@ public class JpaWaitingAdapter implements WaitingRepositoryPort {
 
     @Override
     public List<CalledWaitingInfo> findCalledByBoothIdWithUserInfo(Long boothId) {
-        return waitingJpaRepository.findByBoothIdAndStatusWithUser(boothId, WaitingStatus.CALLED)
-            .stream()
-            .map(entity -> new CalledWaitingInfo(
-                entity.getId(),
-                entity.getUser().getId(),
-                entity.getUser().getNickname(),
-                entity.getCalledPosition(),
-                entity.getStatus(),
-                entity.getCalledAt()
-            ))
-            .toList();
+        return waitingJpaRepository.findByBoothIdAndStatusesWithUser(boothId, WaitingStatus.ACTIVE_STATUSES)
+                .stream()
+                .map(entity -> new CalledWaitingInfo(
+                        entity.getId(),
+                        entity.getUser().getId(),
+                        entity.getUser().getNickname(),
+                        entity.getBooth().getId(),
+                        entity.getCalledPosition(),
+                        entity.getStatus(),
+                        entity.getCalledAt(),
+                        entity.getEnteredAt()))
+                .toList();
     }
 
     @Override

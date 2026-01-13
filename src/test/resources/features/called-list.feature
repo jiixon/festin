@@ -28,12 +28,15 @@ Feature: 호출 대기 목록 조회 (스태프용)
     And 첫 번째 항목의 남은 시간은 0초이다
     And 세 번째 항목의 남은 시간은 약 240초이다
 
-  Scenario: ENTERED 상태는 제외
+  Scenario: ENTERED 상태도 포함
     Given "user1"이 "치킨 부스"에 호출되었다 (3분 전)
     And "user2"가 "치킨 부스"에 입장했다
     When 스태프가 "치킨 부스"의 호출 대기 목록을 조회한다
-    Then 호출 대기 목록 크기는 1이다
-    And 첫 번째 항목의 닉네임은 "user1"이다
+    Then 호출 대기 목록 크기는 2이다
+    And 첫 번째 항목의 상태는 "ENTERED"이다
+    And 첫 번째 항목의 남은 시간은 없다
+    And 첫 번째 항목의 입장 시간은 존재한다
+    And 두 번째 항목의 상태는 "CALLED"이다
 
   Scenario: COMPLETED 상태는 제외
     Given "user1"이 "치킨 부스"에 호출되었다 (3분 전)

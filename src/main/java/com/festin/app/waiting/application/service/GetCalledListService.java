@@ -41,27 +41,30 @@ public class GetCalledListService implements GetCalledListUseCase {
     @Override
     public CalledListResult getCalledList(Long boothId) {
         // 1. 호출된 대기 목록 조회 (User 정보 포함)
-        List<CalledWaitingInfo> calledWaitings =
-            waitingRepositoryPort.findCalledByBoothIdWithUserInfo(boothId);
+        List<CalledWaitingInfo> calledWaitings = waitingRepositoryPort.findCalledByBoothIdWithUserInfo(boothId);
 
         // 2. NoShowPolicy를 통한 남은 시간 계산 및 Result 변환
         LocalDateTime now = LocalDateTime.now();
         List<CalledItem> items = calledWaitings.stream()
-            .map(info -> {
-                // Domain Policy를 통한 남은 시간 계산
-                int remainingSeconds = noShowPolicy.calculateRemainingTime(info.calledAt(), now);
+                .map(info -> {
+                    // ENTERED 상태는 이미 입장했으므로 노쇼 타이머 불필요 (null 반환)
+                    Integer remainingSeconds = info
+                            .status() == com.festin.app.waiting.domain.model.WaitingStatus.ENTERED
+                                    ? null
+                                    : noShowPolicy.calculateRemainingTime(info.calledAt(), now);
 
-                return new CalledItem(
-                    info.waitingId(),
-                    info.userId(),
-                    info.nickname(),
-                    info.position(),
-                    info.status(),
-                    info.calledAt(),
-                    remainingSeconds
-                );
-            })
-            .toList();
+                    return new CalledItem(
+                            info.waitingId(),
+                            info.userId(),
+                            info.nickname(),
+                            info.boothId(),
+                            info.position(),
+                            info.status(),
+                            info.calledAt(),
+                            info.enteredAt(),
+                            remainingSeconds);
+                })
+                .toList();
 
         return new CalledListResult(items);
     }
