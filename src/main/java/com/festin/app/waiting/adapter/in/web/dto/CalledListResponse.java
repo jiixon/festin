@@ -12,8 +12,7 @@ import java.util.List;
  * Web Layer DTO
  */
 public record CalledListResponse(
-    List<CalledItem> calledList
-) {
+        List<CalledItem> calledList) {
 
     /**
      * CalledListResult → CalledListResponse 변환
@@ -24,16 +23,17 @@ public record CalledListResponse(
      */
     public static CalledListResponse from(CalledListResult result) {
         List<CalledItem> items = result.calledList().stream()
-            .map(item -> new CalledItem(
-                item.waitingId(),
-                item.userId(),
-                item.nickname(),
-                item.position(),
-                item.status().name(),
-                item.calledAt().format(DateTimeFormatter.ISO_DATE_TIME),
-                item.remainingTime()
-            ))
-            .toList();
+                .map(item -> new CalledItem(
+                        item.waitingId(),
+                        item.userId(),
+                        item.nickname(),
+                        item.boothId(),
+                        item.position(),
+                        item.status().name(),
+                        item.calledAt().format(DateTimeFormatter.ISO_DATE_TIME),
+                        item.enteredAt() != null ? item.enteredAt().format(DateTimeFormatter.ISO_DATE_TIME) : null,
+                        item.remainingTime()))
+                .toList();
 
         return new CalledListResponse(items);
     }
@@ -42,12 +42,14 @@ public record CalledListResponse(
      * 호출된 대기 항목
      */
     public record CalledItem(
-        Long waitingId,
-        Long userId,
-        String nickname,
-        int position,
-        String status,
-        String calledAt,
-        int remainingTime
-    ) {}
+            Long waitingId,
+            Long userId,
+            String nickname,
+            Long boothId,
+            int position,
+            String status,
+            String calledAt,
+            String enteredAt,
+            Integer remainingTime) {
+    }
 }

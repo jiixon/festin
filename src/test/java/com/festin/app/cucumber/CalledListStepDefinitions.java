@@ -68,8 +68,7 @@ public class CalledListStepDefinitions {
                 .position(2)
                 .statusEntered(
                         LocalDateTime.now().minusMinutes(10),
-                        LocalDateTime.now().minusMinutes(5)
-                )
+                        LocalDateTime.now().minusMinutes(5))
                 .build();
     }
 
@@ -89,8 +88,7 @@ public class CalledListStepDefinitions {
                         CompletionType.ENTERED,
                         LocalDateTime.now().minusHours(1),
                         LocalDateTime.now().minusMinutes(50),
-                        LocalDateTime.now().minusMinutes(40)
-                )
+                        LocalDateTime.now().minusMinutes(40))
                 .build();
     }
 
@@ -135,22 +133,43 @@ public class CalledListStepDefinitions {
         assertThat(actualStatus).isEqualTo(expectedStatus);
     }
 
+    @And("두 번째 항목의 상태는 {string}이다")
+    public void secondItemStatusIs(String expectedStatus) {
+        String actualStatus = testContext.getCalledListResponse().calledList().get(1).status();
+        assertThat(actualStatus).isEqualTo(expectedStatus);
+    }
+
+    @And("첫 번째 항목의 남은 시간은 없다")
+    public void firstItemRemainingTimeIsNull() {
+        Integer actual = testContext.getCalledListResponse().calledList().get(0).remainingTime();
+        assertThat(actual).isNull();
+    }
+
+    @And("첫 번째 항목의 입장 시간은 존재한다")
+    public void firstItemEnteredAtIsNotNull() {
+        String enteredAt = testContext.getCalledListResponse().calledList().get(0).enteredAt();
+        assertThat(enteredAt).isNotNull();
+    }
+
     @And("첫 번째 항목의 남은 시간은 약 {int}초이다")
     public void firstItemRemainingTimeIsAbout(int expectedSeconds) {
-        int actual = testContext.getCalledListResponse().calledList().get(0).remainingTime();
+        Integer actual = testContext.getCalledListResponse().calledList().get(0).remainingTime();
+        assertThat(actual).isNotNull();
         // ±10초 허용 (API 호출 지연 고려)
         assertThat(actual).isBetween(expectedSeconds - 10, expectedSeconds + 10);
     }
 
     @And("첫 번째 항목의 남은 시간은 {int}초이다")
     public void firstItemRemainingTimeIs(int expectedSeconds) {
-        int actual = testContext.getCalledListResponse().calledList().get(0).remainingTime();
+        Integer actual = testContext.getCalledListResponse().calledList().get(0).remainingTime();
+        assertThat(actual).isNotNull();
         assertThat(actual).isEqualTo(expectedSeconds);
     }
 
     @And("세 번째 항목의 남은 시간은 약 {int}초이다")
     public void thirdItemRemainingTimeIsAbout(int expectedSeconds) {
-        int actual = testContext.getCalledListResponse().calledList().get(2).remainingTime();
+        Integer actual = testContext.getCalledListResponse().calledList().get(2).remainingTime();
+        assertThat(actual).isNotNull();
         // ±10초 허용 (API 호출 지연 고려)
         assertThat(actual).isBetween(expectedSeconds - 10, expectedSeconds + 10);
     }
