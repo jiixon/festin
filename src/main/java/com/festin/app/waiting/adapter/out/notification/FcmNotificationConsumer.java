@@ -38,15 +38,11 @@ public class FcmNotificationConsumer {
     private final FirebaseClient firebaseClient;
     private final NotificationIdempotencyPort idempotencyPort;
 
-    @RabbitListener(
-            queues = NotificationQueueConfig.NOTIFICATION_QUEUE,
-            ackMode = "MANUAL"
-    )
+    @RabbitListener(queues = NotificationQueueConfig.NOTIFICATION_QUEUE, ackMode = "MANUAL")
     public void handleNotification(
             NotificationCommand command,
             Channel channel,
-            @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag
-    ) {
+            @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         logReceived(command);
 
         // 중복 처리 체크
@@ -96,13 +92,17 @@ public class FcmNotificationConsumer {
     private Message buildCallMessage(CallNotification notification, String fcmToken) {
         return Message.builder()
                 .setToken(fcmToken)
-                .setNotification(Notification.builder()
-                        .setTitle("부스 호출 알림")
-                        .setBody(String.format("%s 부스에서 %d번째로 호출되었습니다!",
-                                notification.boothName(),
-                                notification.calledPosition()))
-                        .build())
+                // .setNotification(Notification.builder()
+                // .setTitle("부스 호출 알림")
+                // .setBody(String.format("%s 부스에서 %d번째로 호출되었습니다!",
+                // notification.boothName(),
+                // notification.calledPosition()))
+                // .build())
                 .putData("type", "CALL")
+                .putData("title", "부스 호출 알림")
+                .putData("body", String.format("%s 부스에서 %d번째로 호출되었습니다!",
+                        notification.boothName(),
+                        notification.calledPosition()))
                 .putData("boothId", String.valueOf(notification.boothId()))
                 .putData("calledPosition", String.valueOf(notification.calledPosition()))
                 .build();
@@ -125,8 +125,8 @@ public class FcmNotificationConsumer {
 
         // 잘못된 토큰인 경우 캐시에서 삭제
         if ("INVALID_ARGUMENT".equals(errorCode) ||
-            "UNREGISTERED".equals(errorCode) ||
-            "SENDER_ID_MISMATCH".equals(errorCode)) {
+                "UNREGISTERED".equals(errorCode) ||
+                "SENDER_ID_MISMATCH".equals(errorCode)) {
 
             log.warn("유효하지 않은 FCM 토큰 - userId: {}, errorCode: {}, 캐시에서 삭제합니다",
                     userId, errorCode);
@@ -156,35 +156,35 @@ public class FcmNotificationConsumer {
     private void logReceived(NotificationCommand command) {
         switch (command) {
             case CallNotification notification ->
-                    log.info("호출 알림 수신 - eventId: {}, userId: {}, boothId: {}, position: {}",
-                            notification.eventId(),
-                            notification.userId(),
-                            notification.boothId(),
-                            notification.calledPosition());
+                log.info("호출 알림 수신 - eventId: {}, userId: {}, boothId: {}, position: {}",
+                        notification.eventId(),
+                        notification.userId(),
+                        notification.boothId(),
+                        notification.calledPosition());
         }
     }
 
     private void logSuccess(NotificationCommand command, String messageId) {
         switch (command) {
             case CallNotification notification ->
-                    log.info("FCM 푸시 알림 발송 성공 - eventId: {}, userId: {}, boothId: {}, messageId: {}",
-                            notification.eventId(),
-                            notification.userId(),
-                            notification.boothId(),
-                            messageId);
+                log.info("FCM 푸시 알림 발송 성공 - eventId: {}, userId: {}, boothId: {}, messageId: {}",
+                        notification.eventId(),
+                        notification.userId(),
+                        notification.boothId(),
+                        messageId);
         }
     }
 
     private void logError(NotificationCommand command, String errorCode, FirebaseMessagingException e) {
         switch (command) {
             case CallNotification notification ->
-                    log.error("FCM 푸시 알림 발송 실패 - eventId: {}, userId: {}, boothId: {}, errorCode: {}, message: {}",
-                            notification.eventId(),
-                            notification.userId(),
-                            notification.boothId(),
-                            errorCode,
-                            e.getMessage(),
-                            e);
+                log.error("FCM 푸시 알림 발송 실패 - eventId: {}, userId: {}, boothId: {}, errorCode: {}, message: {}",
+                        notification.eventId(),
+                        notification.userId(),
+                        notification.boothId(),
+                        errorCode,
+                        e.getMessage(),
+                        e);
         }
     }
 }
