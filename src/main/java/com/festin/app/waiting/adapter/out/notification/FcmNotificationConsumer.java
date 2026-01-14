@@ -13,6 +13,8 @@ import com.google.firebase.messaging.AndroidConfig;
 import com.google.firebase.messaging.AndroidNotification;
 import com.google.firebase.messaging.ApnsConfig;
 import com.google.firebase.messaging.Aps;
+import com.google.firebase.messaging.WebpushConfig;
+import com.google.firebase.messaging.WebpushNotification;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -111,7 +113,19 @@ public class FcmNotificationConsumer {
                                 .build())
                         .putHeader("apns-priority", "10") // 즉시 전송
                         .build())
-                // Notification 필드 복구 (Firebase Console과 동일 환경)
+                // WebPush (Chrome 등) 설정
+                .setWebpushConfig(WebpushConfig.builder()
+                        .putHeader("Urgency", "high")
+                        .setNotification(WebpushNotification.builder()
+                                .setTitle("부스 호출 알림")
+                                .setBody(String.format("%s 부스에서 %d번째로 호출되었습니다!",
+                                        notification.boothName(),
+                                        notification.calledPosition()))
+                                .setIcon("/icon-192.png")
+                                .setRequireInteraction(true)
+                                .build())
+                        .build())
+                // 공통 Notification (백업)
                 .setNotification(Notification.builder()
                         .setTitle("부스 호출 알림")
                         .setBody(String.format("%s 부스에서 %d번째로 호출되었습니다!",
