@@ -9,6 +9,10 @@ import com.festin.app.waiting.application.port.out.NotificationPort.Notification
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidNotification;
+import com.google.firebase.messaging.ApnsConfig;
+import com.google.firebase.messaging.Aps;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -92,12 +96,28 @@ public class FcmNotificationConsumer {
     private Message buildCallMessage(CallNotification notification, String fcmToken) {
         return Message.builder()
                 .setToken(fcmToken)
-                // .setNotification(Notification.builder()
-                // .setTitle("부스 호출 알림")
-                // .setBody(String.format("%s 부스에서 %d번째로 호출되었습니다!",
-                // notification.boothName(),
-                // notification.calledPosition()))
-                // .build())
+                // Android 설정: 우선순위 높음
+                .setAndroidConfig(AndroidConfig.builder()
+                        .setPriority(AndroidConfig.Priority.HIGH)
+                        .setNotification(AndroidNotification.builder()
+                                .setClickAction("FLUTTER_NOTIFICATION_CLICK") // 필요한 경우 설정
+                                .build())
+                        .build())
+                // APNs (iOS) 설정: content-available=1 (Silent Push / Background Fetch)
+                .setApnsConfig(ApnsConfig.builder()
+                        .setAps(Aps.builder()
+                                .setContentAvailable(true) // 핵심! 백그라운드 처리 깨우기
+                                .setSound("default")
+                                .build())
+                        .putHeader("apns-priority", "10") // 즉시 전송
+                        .build())
+                // Notification 필드 복구 (Firebase Console과 동일 환경)
+                .setNotification(Notification.builder()
+                        .setTitle("부스 호출 알림")
+                        .setBody(String.format("%s 부스에서 %d번째로 호출되었습니다!",
+                                notification.boothName(),
+                                notification.calledPosition()))
+                        .build())
                 .putData("type", "CALL")
                 .putData("title", "부스 호출 알림")
                 .putData("body", String.format("%s 부스에서 %d번째로 호출되었습니다!",
