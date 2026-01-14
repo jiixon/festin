@@ -118,9 +118,8 @@ public class FcmNotificationConsumer {
                         .putHeader("Urgency", "high")
                         .setNotification(WebpushNotification.builder()
                                 .setTitle("부스 호출 알림")
-                                .setBody(String.format("%s 부스에서 %d번째로 호출되었습니다!",
-                                        notification.boothName(),
-                                        notification.calledPosition()))
+                                .setBody(String.format("%s 부스 입장 순서가 되었습니다! 지금 방문해주세요.",
+                                        notification.boothName()))
                                 .setIcon("/icon-192.png")
                                 .setRequireInteraction(true)
                                 .build())
@@ -128,15 +127,13 @@ public class FcmNotificationConsumer {
                 // 공통 Notification (백업)
                 .setNotification(Notification.builder()
                         .setTitle("부스 호출 알림")
-                        .setBody(String.format("%s 부스에서 %d번째로 호출되었습니다!",
-                                notification.boothName(),
-                                notification.calledPosition()))
+                        .setBody(String.format("%s 부스 입장 순서가 되었습니다! 지금 방문해주세요.",
+                                notification.boothName()))
                         .build())
                 .putData("type", "CALL")
                 .putData("title", "부스 호출 알림")
-                .putData("body", String.format("%s 부스에서 %d번째로 호출되었습니다!",
-                        notification.boothName(),
-                        notification.calledPosition()))
+                .putData("body", String.format("%s 부스 입장 순서가 되었습니다! 지금 방문해주세요.",
+                        notification.boothName()))
                 .putData("boothId", String.valueOf(notification.boothId()))
                 .putData("calledPosition", String.valueOf(notification.calledPosition()))
                 .build();
