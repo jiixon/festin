@@ -1,0 +1,63 @@
+# ===========================================
+# Festin 성능 모니터링 스택
+# 사용법: docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d
+# ===========================================
+
+services:
+  # Prometheus - 메트릭 수집
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: festin-prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - festin-network
+    restart: unless-stopped
+
+  # Grafana - 시각화 대시보드
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: festin-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=festin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - festin-network
+    restart: unless-stopped
+
+  # Redis Exporter - Redis 메트릭 수집
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: festin-redis-exporter
+    environment:
+      - REDIS_ADDR=redis://festin-redis:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - festin-network
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  festin-network:
+    external: true
+    name: festin_festin-network

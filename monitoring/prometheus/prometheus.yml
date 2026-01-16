@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # Spring Boot Application
+  - job_name: 'festin-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['festin-app:8080']
+
+  # Redis (redis_exporter 사용 시)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['festin-redis-exporter:9121']
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
