@@ -11,7 +11,6 @@ import com.festin.app.waiting.domain.model.EnqueueResultFactory;
 import com.festin.app.waiting.domain.policy.MaxWaitingPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -37,7 +36,6 @@ public class EnqueueService implements EnqueueUseCase {
     private final MaxWaitingPolicy maxWaitingPolicy;
 
     @Override
-    @Transactional
     public EnqueueResult enqueue(EnqueueCommand command) {
         Booth booth = boothCachePort.getBooth(command.boothId()).orElseThrow(BoothNotFoundException::new);
         booth.validateForEnqueue();
