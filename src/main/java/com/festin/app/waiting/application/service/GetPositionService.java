@@ -9,7 +9,6 @@ import com.festin.app.waiting.domain.exception.WaitingNotFoundException;
 import com.festin.app.waiting.domain.model.EstimatedWaitTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 순번 조회 UseCase 구현
@@ -28,7 +27,6 @@ public class GetPositionService implements GetPositionUseCase {
     private final QueueCachePort queueCachePort;
 
     @Override
-    @Transactional(readOnly = true)
     public PositionResult getPosition(Long userId, Long boothId) {
         String boothName = boothCachePort.getName(boothId)
             .orElseThrow(BoothNotFoundException::new);
