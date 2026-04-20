@@ -7,7 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Redis Booth Adapter
@@ -36,6 +41,11 @@ public class RedisBoothAdapter implements BoothCachePort {
     private static final String FIELD_NAME = "name";
     private static final String FIELD_CAPACITY = "capacity";
     private static final String FIELD_STATUS = "status";
+    private static final String FIELD_DESCRIPTION = "description";
+    private static final String FIELD_UNIVERSITY_NAME = "universityName";
+
+    // 부스 ID 목록 관리용 키
+    private static final String BOOTH_IDS_KEY = "booth:ids";
 
     @Override
     public Optional<Booth> getBooth(Long boothId) {
@@ -123,5 +133,104 @@ public class RedisBoothAdapter implements BoothCachePort {
         }
 
         return Optional.of(value.toString());
+    }
+
+    @Override
+    public void setDescription(Long boothId, String description) {
+        String key = BOOTH_KEY_PREFIX + boothId + META_KEY_SUFFIX;
+        redisTemplate.opsForHash().put(key, FIELD_DESCRIPTION, description);
+    }
+
+    @Override
+    public Optional<String> getDescription(Long boothId) {
+        String key = BOOTH_KEY_PREFIX + boothId + META_KEY_SUFFIX;
+        Object value = redisTemplate.opsForHash().get(key, FIELD_DESCRIPTION);
+
+        if (value == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(value.toString());
+    }
+
+    @Override
+    public void setUniversityName(Long boothId, String universityName) {
+        String key = BOOTH_KEY_PREFIX + boothId + META_KEY_SUFFIX;
+        redisTemplate.opsForHash().put(key, FIELD_UNIVERSITY_NAME, universityName);
+    }
+
+    @Override
+    public Optional<String> getUniversityName(Long boothId) {
+        String key = BOOTH_KEY_PREFIX + boothId + META_KEY_SUFFIX;
+        Object value = redisTemplate.opsForHash().get(key, FIELD_UNIVERSITY_NAME);
+
+        if (value == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(value.toString());
+    }
+
+    @Override
+    public Map<Long, BoothMeta> getBoothMetas(List<Long> boothIds) {
+        if (boothIds == null || boothIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // Pipeline으로 모든 부스의 메타 정보 한 번에 조회
+        List<Object> results = redisTemplate.executePipelined(
+                (org.springframework.data.redis.core.RedisCallback<Object>) connection -> {
+                    for (Long boothId : boothIds) {
+                        byte[] key = (BOOTH_KEY_PREFIX + boothId + META_KEY_SUFFIX).getBytes();
+                        connection.hGetAll(key);
+                    }
+                    return null;
+                });
+
+        // 결과 매핑
+        Map<Long, BoothMeta> metaMap = new HashMap<>();
+        for (int i = 0; i < boothIds.size(); i++) {
+            Long boothId = boothIds.get(i);
+            @SuppressWarnings("unchecked")
+            Map<Object, Object> data = (Map<Object, Object>) results.get(i);
+
+            if (data != null && !data.isEmpty()) {
+                String name = getStringValue(data, FIELD_NAME);
+                String description = getStringValue(data, FIELD_DESCRIPTION);
+                String universityName = getStringValue(data, FIELD_UNIVERSITY_NAME);
+                String statusStr = getStringValue(data, FIELD_STATUS);
+                String capacityStr = getStringValue(data, FIELD_CAPACITY);
+
+                BoothStatus status = statusStr != null ? BoothStatus.valueOf(statusStr) : null;
+                int capacity = capacityStr != null ? Integer.parseInt(capacityStr) : 0;
+
+                metaMap.put(boothId, new BoothMeta(
+                        boothId, name, description, universityName, status, capacity
+                ));
+            }
+        }
+        return metaMap;
+    }
+
+    private String getStringValue(Map<Object, Object> data, String field) {
+        Object value = data.get(field);
+        return value != null ? value.toString() : null;
+    }
+
+    @Override
+    public List<Long> getAllBoothIds() {
+        Set<String> ids = redisTemplate.opsForSet().members(BOOTH_IDS_KEY);
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return ids.stream()
+                .map(Long::parseLong)
+                .sorted()
+                .toList();
+    }
+
+    @Override
+    public void addBoothId(Long boothId) {
+        redisTemplate.opsForSet().add(BOOTH_IDS_KEY, boothId.toString());
     }
 }

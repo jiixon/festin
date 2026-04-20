@@ -24,4 +24,10 @@ public interface BoothJpaRepository extends JpaRepository<BoothEntity, Long> {
      */
     @Query("SELECT b FROM BoothEntity b JOIN FETCH b.university")
     List<BoothEntity> findAllWithUniversity();
+
+    /**
+     * OPEN 상태 Booth만 조회 (캐시 워밍 전용)
+     */
+    @Query("SELECT b FROM BoothEntity b JOIN FETCH b.university WHERE b.status = 'OPEN'")
+    List<BoothEntity> findAllOpenWithUniversity();
 }

@@ -107,4 +107,72 @@ public interface BoothCachePort {
      * @return 부스 이름
      */
     Optional<String> getName(Long boothId);
+
+    /**
+     * 부스 설명 저장
+     *
+     * @param boothId 부스 ID
+     * @param description 부스 설명
+     */
+    void setDescription(Long boothId, String description);
+
+    /**
+     * 부스 설명 조회
+     *
+     * @param boothId 부스 ID
+     * @return 부스 설명
+     */
+    Optional<String> getDescription(Long boothId);
+
+    /**
+     * 부스 대학 이름 저장
+     *
+     * @param boothId 부스 ID
+     * @param universityName 대학 이름
+     */
+    void setUniversityName(Long boothId, String universityName);
+
+    /**
+     * 부스 대학 이름 조회
+     *
+     * @param boothId 부스 ID
+     * @return 대학 이름
+     */
+    Optional<String> getUniversityName(Long boothId);
+
+    /**
+     * 모든 부스 정보 일괄 조회 (Pipeline)
+     *
+     * Redis Pipeline을 사용하여 네트워크 왕복을 최소화
+     *
+     * @param boothIds 부스 ID 목록
+     * @return 부스별 메타 정보 Map
+     */
+    java.util.Map<Long, BoothMeta> getBoothMetas(java.util.List<Long> boothIds);
+
+    /**
+     * 부스 메타 정보
+     */
+    record BoothMeta(
+            Long boothId,
+            String name,
+            String description,
+            String universityName,
+            BoothStatus status,
+            int capacity
+    ) {}
+
+    /**
+     * 모든 부스 ID 목록 조회
+     *
+     * @return 부스 ID 목록
+     */
+    java.util.List<Long> getAllBoothIds();
+
+    /**
+     * 부스 ID 목록에 부스 추가
+     *
+     * @param boothId 부스 ID
+     */
+    void addBoothId(Long boothId);
 }
