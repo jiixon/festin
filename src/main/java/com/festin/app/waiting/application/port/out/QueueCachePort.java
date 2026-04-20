@@ -80,6 +80,17 @@ public interface QueueCachePort {
     int getQueueSize(Long boothId);
 
     /**
+     * 여러 부스의 대기열 인원 수 일괄 조회 (Pipeline)
+     *
+     * Redis Pipeline을 사용하여 네트워크 왕복을 최소화
+     * - N개 부스 조회 시 1회 왕복으로 처리
+     *
+     * @param boothIds 부스 ID 목록
+     * @return 부스별 대기 인원 수 Map
+     */
+    java.util.Map<Long, Integer> getQueueSizes(java.util.List<Long> boothIds);
+
+    /**
      * 대기열에서 사용자 제거
      *
      * @param boothId 부스 ID

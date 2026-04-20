@@ -54,6 +54,13 @@ public class JpaBoothAdapter implements BoothRepositoryPort {
     }
 
     @Override
+    public List<BoothInfo> findAllOpenBoothInfo() {
+        return boothJpaRepository.findAllOpenWithUniversity().stream()
+            .map(this::toBoothInfo)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public List<BoothInfo> findAllBoothInfoByUniversityId(Long universityId) {
         return boothJpaRepository.findAllByUniversityIdWithUniversity(universityId).stream()
             .map(this::toBoothInfo)

@@ -11,10 +11,12 @@ const enqueueSuccess = new Counter('enqueue_success');
 const enqueueFail = new Counter('enqueue_fail');
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
-const BOOTH_ID = __ENV.BOOTH_ID || 1;
+const BOOTH_ID = __ENV.BOOTH_ID || 2;  // 부하테스트 전용 부스
 const MAX_VUSERS = 1000;
 
 export const options = {
+    setupTimeout: '300s',  // 1000명 토큰 생성 시간 확보
+    teardownTimeout: '120s',
     scenarios: {
         spike: {
             executor: 'ramping-arrival-rate',

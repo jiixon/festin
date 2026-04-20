@@ -121,6 +121,30 @@ public class RedisQueueAdapter implements QueueCachePort {
     }
 
     @Override
+    public Map<Long, Integer> getQueueSizes(List<Long> boothIds) {
+        if (boothIds == null || boothIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // Pipeline으로 한 번에 조회
+        List<Object> results = redisTemplate.executePipelined((org.springframework.data.redis.core.RedisCallback<Object>) connection -> {
+            for (Long boothId : boothIds) {
+                byte[] key = (QUEUE_KEY_PREFIX + boothId).getBytes();
+                connection.zCard(key);
+            }
+            return null;
+        });
+
+        // 결과 매핑
+        Map<Long, Integer> sizeMap = new HashMap<>();
+        for (int i = 0; i < boothIds.size(); i++) {
+            Long size = (Long) results.get(i);
+            sizeMap.put(boothIds.get(i), size != null ? size.intValue() : 0);
+        }
+        return sizeMap;
+    }
+
+    @Override
     public boolean remove(Long boothId, Long userId) {
         String key = QUEUE_KEY_PREFIX + boothId;
 

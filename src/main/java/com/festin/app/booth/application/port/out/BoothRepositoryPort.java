@@ -49,6 +49,13 @@ public interface BoothRepositoryPort {
     List<BoothInfo> findAllBoothInfo();
 
     /**
+     * OPEN 상태 Booth 정보 조회 (캐시 워밍 전용)
+     *
+     * @return OPEN 상태 BoothInfo 목록
+     */
+    List<BoothInfo> findAllOpenBoothInfo();
+
+    /**
      * 대학별 Booth 정보 조회 (Read Model)
      *
      * @param universityId 대학 ID

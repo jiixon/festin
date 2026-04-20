@@ -36,10 +36,11 @@ public class BoothFixture {
      * @return 생성된 부스 ID
      */
     public Long createOpenBooth(UniversityEntity university, String name, int capacity) {
+        String description = name + " 설명";
         BoothEntity booth = new BoothEntity(
             university,
             name,
-            name + " 설명",
+            description,
             capacity,
             BoothStatus.OPEN
         );
@@ -50,10 +51,15 @@ public class BoothFixture {
         redisTemplate.opsForHash().put(metaKey, "status", "OPEN");
         redisTemplate.opsForHash().put(metaKey, "name", name);
         redisTemplate.opsForHash().put(metaKey, "capacity", String.valueOf(capacity));
+        redisTemplate.opsForHash().put(metaKey, "description", description);
+        redisTemplate.opsForHash().put(metaKey, "universityName", university.getName());
 
         // currentPeople 초기화
         String currentKey = "booth:" + boothId + ":current";
         redisTemplate.opsForValue().set(currentKey, "0");
+
+        // 부스 ID 목록에 추가
+        redisTemplate.opsForSet().add("booth:ids", boothId.toString());
 
         return boothId;
     }
@@ -68,10 +74,11 @@ public class BoothFixture {
      * @return 생성된 부스 ID
      */
     public Long createBooth(UniversityEntity university, String name, int capacity, BoothStatus status) {
+        String description = name + " 설명";
         BoothEntity booth = new BoothEntity(
             university,
             name,
-            name + " 설명",
+            description,
             capacity,
             status
         );
@@ -82,10 +89,15 @@ public class BoothFixture {
         redisTemplate.opsForHash().put(metaKey, "status", status.name());
         redisTemplate.opsForHash().put(metaKey, "name", name);
         redisTemplate.opsForHash().put(metaKey, "capacity", String.valueOf(capacity));
+        redisTemplate.opsForHash().put(metaKey, "description", description);
+        redisTemplate.opsForHash().put(metaKey, "universityName", university.getName());
 
         // currentPeople 초기화
         String currentKey = "booth:" + boothId + ":current";
         redisTemplate.opsForValue().set(currentKey, "0");
+
+        // 부스 ID 목록에 추가
+        redisTemplate.opsForSet().add("booth:ids", boothId.toString());
 
         return boothId;
     }

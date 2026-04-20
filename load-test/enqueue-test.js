@@ -18,11 +18,12 @@ const errorRate = new Rate('error_rate');
 
 // Configuration
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
-const BOOTH_ID = __ENV.BOOTH_ID || 1;
+const BOOTH_ID = __ENV.BOOTH_ID || 2;  // 부하테스트 전용 부스
 const MAX_VUSERS = 500;  // 최대 VUser 수
 
 // Test Stages: 점진적 부하 증가
 export const options = {
+    setupTimeout: '180s',  // 토큰 생성 시간 확보
     stages: [
         { duration: '30s', target: 10 },    // Warm-up: 10 VUsers
         { duration: '1m', target: 50 },     // Ramp-up: 50 VUsers
