@@ -13,6 +13,7 @@ public record EnqueueResult(
     Integer position,           // 현재 순번
     Integer totalWaiting,       // 전체 대기자 수
     Integer estimatedWaitTime,  // 예상 대기 시간 (분)
-    LocalDateTime registeredAt  // 등록 시간
+    LocalDateTime registeredAt, // 등록 시간
+    boolean alreadyEnqueued     // true면 기존 등록 (멱등성), false면 신규 등록
 ) {
 }

@@ -60,8 +60,9 @@ public class WaitingController {
         EnqueueCommand command = new EnqueueCommand(userId, request.getBoothId());
         EnqueueResult result = enqueueUseCase.enqueue(command);
 
+        HttpStatus status = result.alreadyEnqueued() ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity
-            .status(HttpStatus.CREATED)
+            .status(status)
             .body(EnqueueResponse.from(result));
     }
 

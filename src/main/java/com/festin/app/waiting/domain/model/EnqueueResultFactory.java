@@ -13,6 +13,11 @@ import java.time.LocalDateTime;
  * 책임:
  * - EnqueueAtomicResult를 EnqueueResult로 변환
  * - 각 상태(SUCCESS, ALREADY_ENQUEUED, MAX_BOOTHS_EXCEEDED)별 처리 로직
+ *
+ * 멱등성 설계:
+ * - SUCCESS → 201 Created (신규 등록)
+ * - ALREADY_ENQUEUED → 200 OK (기존 등록 반환, 큐 중복 없음)
+ * - MAX_BOOTHS_EXCEEDED → 409 Conflict (예외)
  */
 public class EnqueueResultFactory {
 
@@ -43,7 +48,8 @@ public class EnqueueResultFactory {
                 atomicResult.position(),
                 atomicResult.totalWaiting(),
                 estimatedWaitTime.minutes(),
-                registeredAt
+                registeredAt,
+                false
         );
     }
 
@@ -64,7 +70,8 @@ public class EnqueueResultFactory {
                 atomicResult.position(),
                 atomicResult.totalWaiting(),
                 estimatedWaitTime.minutes(),
-                originalRegisteredAt
+                originalRegisteredAt,
+                true
         );
     }
 }
