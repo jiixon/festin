@@ -1,0 +1,50 @@
+# ============================================================
+# Festin 관측 — 로컬(맥) viewer: Prometheus + Grafana
+# ------------------------------------------------------------
+# 무거운 컴포넌트는 EC2 밖에서 실행 → t3.micro 메모리 보호 + 측정 오염 방지.
+# 사전: SSH 터널로 EC2 exporter 포트 포워딩 (monitoring/prometheus/prometheus.viewer.yml 참고).
+#
+# 실행 (맥):
+#   docker compose -f docker-compose.viewer.yml up -d
+#   Grafana   → http://localhost:3001   (admin / festin123)
+#   Prometheus→ http://localhost:9090
+#
+# retention 30d: Phase 4b 실시간 tail(1~2주) 데이터 보존.
+# ============================================================
+services:
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: festin-prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.viewer.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # 맥/리눅스 모두에서 터널 포트 접근
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: festin-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=festin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

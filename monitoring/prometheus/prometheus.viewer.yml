@@ -1,0 +1,45 @@
+# ============================================================
+# Prometheus 설정 — 맥(viewer)에서 SSH 터널 통해 EC2 scrape
+# ------------------------------------------------------------
+# 사전 SSH 터널 (맥에서, viewer 실행 동안 유지):
+#   ssh -i <key> -N \
+#     -L 18080:localhost:8080   \  # festin-app /actuator/prometheus
+#     -L 9100:localhost:9100    \  # node-exporter (호스트 지표)
+#     -L 9121:localhost:9121    \  # redis-exporter
+#     -L 15692:localhost:15692  \  # rabbitmq_prometheus 플러그인
+#     ubuntu@<EC2>
+#
+# Prometheus 는 맥의 docker 컨테이너이므로 맥 호스트의 터널 포트는
+# host.docker.internal 로 접근한다 (docker-compose.viewer.yml 의 extra_hosts 참고).
+# ※ 지표 이름은 exporter 버전에 따라 약간 다를 수 있음(node/redis/rabbitmq).
+# ============================================================
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # Spring Boot 앱 (micrometer-prometheus)
+  - job_name: 'festin-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:18080']
+
+  # 호스트 자원 (CPU / 메모리 / 디스크)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['host.docker.internal:9121']
+
+  # RabbitMQ (플러그인 [E*] rabbitmq_prometheus)
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['host.docker.internal:15692']
+
+  # Prometheus self
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
