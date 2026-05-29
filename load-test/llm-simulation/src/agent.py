@@ -383,6 +383,11 @@ class Agent:
         experience_sec = BOOTH_EXPERIENCE_SEC.get(booth_id, 30)
         arrival_sec = BOOTH_ARRIVAL_SEC
 
+        # 빈 큐가 N회 연속이면 파동 종료로 보고 빠짐 (압축 운영 시 staff 페이싱 비효율 제거).
+        # Phase 4 lunch wave 1차에서 22분 중 ~3분이 빈 큐 sleep 으로 소비된 발견에 따른 보정.
+        max_empty_streak = 3
+        empty_streak = 0
+
         for _ in range(20):
             # 1. 다음 손님 호출
             r = await self.c.call_next(self.s.token, booth_id)
@@ -394,13 +399,29 @@ class Agent:
             })
 
             if r.status != 200:
+                empty_streak += 1
+                if empty_streak >= max_empty_streak:
+                    self.s.log("staff_exit_drained", {
+                        "booth_id": booth_id,
+                        "empty_streak": empty_streak,
+                    })
+                    return
                 await asyncio.sleep(arrival_sec)
                 continue
 
             waiting_id = r.body.get("waitingId")
             if not waiting_id:
+                empty_streak += 1
+                if empty_streak >= max_empty_streak:
+                    self.s.log("staff_exit_drained", {
+                        "booth_id": booth_id,
+                        "empty_streak": empty_streak,
+                    })
+                    return
                 await asyncio.sleep(arrival_sec)
                 continue
+
+            empty_streak = 0  # 손님 받았으니 리셋
 
             # 2. 유저 도착 대기
             await asyncio.sleep(arrival_sec)
