@@ -1,0 +1,83 @@
+# ============================================================
+# Phase 4b — 실시간 tail 자동 운영
+# ------------------------------------------------------------
+# GitHub Actions cron으로 점심/오후/저녁 피크 시간대에 가벼운 파동 1회씩 실행.
+# 깊은 진단(힙·hikari·redis key)은 Phase 4a(맥 viewer 켠 상태)에서 끝내고,
+# 이 워크플로우는 "수 주간 매일 운영" 사실 + 시간 의존 문제 감시 용도.
+#
+# 필요한 secrets:
+#   FESTIN_BASE_URL  예: http://52.79.90.76:8080
+#   GROQ_API_KEY     Groq llama-3.1-8b 무료 티어 키
+#
+# 수동 실행:
+#   Actions 탭 → "Phase 4b LLM 시뮬레이션 (cron)" → Run workflow → band 선택
+# ============================================================
+name: Phase 4b LLM 시뮬레이션 (cron)
+
+on:
+  schedule:
+    # UTC 기준 (KST -9h)
+    - cron: '0 3 * * *'   # KST 12:00 점심 피크
+    - cron: '0 6 * * *'   # KST 15:00 오후 피크
+    - cron: '0 10 * * *'  # KST 19:00 저녁 피크
+  workflow_dispatch:
+    inputs:
+      band:
+        description: '시간대 (lunch / afternoon / evening)'
+        type: choice
+        options: [lunch, afternoon, evening]
+        default: lunch
+      waves:
+        description: '파동 개수'
+        type: string
+        default: '1'
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25  # 파동 1개 ~10분, 토큰발급/I/O 여유 포함
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: load-test/llm-simulation/src/requirements.txt
+
+      - name: 의존성 설치
+        working-directory: load-test/llm-simulation/src
+        run: pip install -r requirements.txt
+
+      - name: 시간대 결정 (cron 스케줄 → band 매핑)
+        id: band
+        run: |
+          case "${{ github.event.schedule }}" in
+            "0 3 * * *")  echo "band=lunch"     >> $GITHUB_OUTPUT ;;
+            "0 6 * * *")  echo "band=afternoon" >> $GITHUB_OUTPUT ;;
+            "0 10 * * *") echo "band=evening"   >> $GITHUB_OUTPUT ;;
+            *)            echo "band=${{ inputs.band || 'lunch' }}" >> $GITHUB_OUTPUT ;;
+          esac
+          echo "waves=${{ inputs.waves || '1' }}" >> $GITHUB_OUTPUT
+
+      - name: 시뮬레이션 실행
+        working-directory: load-test/llm-simulation/src
+        env:
+          FESTIN_BASE_URL: ${{ secrets.FESTIN_BASE_URL }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # 4b 는 무인이라 가볍게 — 4a 보다 보수적인 파라미터
+          WAVE_VISITOR_COUNT: '30'
+          WAVE_ARRIVAL_SPREAD_SEC: '120'
+        run: |
+          python runner.py \
+            --phase 4 \
+            --waves ${{ steps.band.outputs.waves }} \
+            --band ${{ steps.band.outputs.band }}
+
+      - name: 결과 artifact 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4b-${{ steps.band.outputs.band }}-${{ github.run_id }}
+          path: load-test/llm-simulation/src/results/phase4/
+          retention-days: 30

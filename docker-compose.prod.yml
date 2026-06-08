@@ -21,6 +21,7 @@ services:
     ports:
       - "5672:5672"   # AMQP
       - "15672:15672" # Management UI
+      - "127.0.0.1:15692:15692" # Prometheus metrics (rabbitmq_prometheus, 터널 전용)
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}

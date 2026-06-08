@@ -1,0 +1,48 @@
+# ============================================================
+# Festin 관측 — EC2 엣지 exporter (경량, ~30MiB)
+# ------------------------------------------------------------
+# Prometheus/Grafana 는 여기 없음 → docker-compose.viewer.yml (맥에서 실행).
+# t3.micro 메모리(911MiB) 보호 + 관찰자 효과 제거를 위해 수집만 분리한다.
+#
+# 실행 (EC2):
+#   docker compose -f docker-compose.exporters.yml up -d
+#
+# 메트릭 포트는 127.0.0.1 에만 bind → 외부 비노출, SSH 터널로만 접근.
+#   ssh -N -L 9100:localhost:9100 -L 9121:localhost:9121 \
+#          -L 15692:localhost:15692 -L 18080:localhost:8080 ubuntu@<EC2>
+# (rabbitmq:15692 는 docker-compose.prod.yml 에서 127.0.0.1 publish, app:8080 은 기존 공개)
+# ============================================================
+services:
+  # 호스트 CPU / 메모리(RSS) / 디스크 — t3.micro OOM·로그 증가 감시
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: festin-node-exporter
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "127.0.0.1:9100:9100"
+    restart: unless-stopped
+
+  # Redis 메모리 / key 수 — key 미정리로 인한 무한 증가 감시
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: festin-redis-exporter
+    environment:
+      - REDIS_ADDR=redis://festin-redis:6379
+    ports:
+      - "127.0.0.1:9121:9121"
+    networks:
+      - festin-network
+    restart: unless-stopped
+
+networks:
+  festin-network:
+    external: true
+    name: festin_festin-network
