@@ -35,7 +35,7 @@ on:
 jobs:
   simulate:
     runs-on: ubuntu-latest
-    timeout-minutes: 25  # 파동 1개 ~10분, 토큰발급/I/O 여유 포함
+    timeout-minutes: 40  # cron 파동 1개 ~25분, Groq rate-limit + t3.micro DB I/O 여유 포함
     steps:
       - uses: actions/checkout@v4
 
@@ -66,8 +66,9 @@ jobs:
           FESTIN_BASE_URL: ${{ secrets.FESTIN_BASE_URL }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           # 4b 는 무인이라 가볍게 — 4a 보다 보수적인 파라미터
-          WAVE_VISITOR_COUNT: '30'
-          WAVE_ARRIVAL_SPREAD_SEC: '120'
+          # t3.micro 안정성 + 40분 timeout 내 완주 위해 보수적으로 조정
+          WAVE_VISITOR_COUNT: '15'
+          WAVE_ARRIVAL_SPREAD_SEC: '90'
         run: |
           python runner.py \
             --phase 4 \
