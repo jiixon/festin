@@ -290,6 +290,7 @@ def collect_results(agents: list[Agent]) -> dict:
         "total_cancel": 0,
         "cancel_positions": [],
         "bugs_detected": [],
+        "server_errors_5xx": [],
         "llm_decisions": [],
         "by_pattern": {},
     }
@@ -313,6 +314,12 @@ def collect_results(agents: list[Agent]) -> dict:
         for log in s.action_log:
             if log.get("bug_detected"):
                 metrics["bugs_detected"].append(log)
+            status = log.get("status")
+            statuses = log.get("statuses") or []
+            if (isinstance(status, int) and status >= 500) or any(
+                isinstance(s_, int) and s_ >= 500 for s_ in statuses
+            ):
+                metrics["server_errors_5xx"].append(log)
             if log.get("event", "").startswith("llm_decision"):
                 metrics["llm_decisions"].append(log)
 
@@ -375,6 +382,7 @@ def update_cumulative_summary(result: dict):
             "total_enqueue": 0,
             "total_cancel": 0,
             "total_bugs": 0,
+            "total_5xx": 0,
             "by_band": {},
             "imbalance": {"mean_stdev_avg": 0.0, "max_stdev_ever": 0.0},
         }
@@ -386,12 +394,14 @@ def update_cumulative_summary(result: dict):
     summary["total_enqueue"] += m["total_enqueue"]
     summary["total_cancel"] += m["total_cancel"]
     summary["total_bugs"] += len(m["bugs_detected"])
+    summary["total_5xx"] = summary.get("total_5xx", 0) + len(m["server_errors_5xx"])
 
-    bb = summary["by_band"].setdefault(band, {"waves": 0, "enqueue": 0, "cancel": 0, "bugs": 0})
+    bb = summary["by_band"].setdefault(band, {"waves": 0, "enqueue": 0, "cancel": 0, "bugs": 0, "errors_5xx": 0})
     bb["waves"] += 1
     bb["enqueue"] += m["total_enqueue"]
     bb["cancel"] += m["total_cancel"]
     bb["bugs"] += len(m["bugs_detected"])
+    bb["errors_5xx"] = bb.get("errors_5xx", 0) + len(m["server_errors_5xx"])
 
     imb = result.get("booth_imbalance", {})
     if "mean_stdev" in imb:
@@ -424,6 +434,7 @@ def print_summary(results: dict, header: str = "비즈니스 지표 요약"):
     print(f"  전환율 (등록자/전체): {m['conversion_rate'] * 100:.1f}%")
     print(f"  평균 이탈 순번:     {m['avg_cancel_position']}")
     print(f"  버그 탐지:          {len(m['bugs_detected'])}건")
+    print(f"  5xx 서버 에러:      {len(m['server_errors_5xx'])}건")
     print(f"  LLM 판단 횟수:      {len(m['llm_decisions'])}회")
     if "booth_imbalance" in results:
         imb = results["booth_imbalance"]
@@ -434,6 +445,13 @@ def print_summary(results: dict, header: str = "비즈니스 지표 요약"):
         print("\n  [⚠️  버그 상세]")
         for bug in m["bugs_detected"]:
             print(f"    {bug['agent_id']} / {bug['event']} / statuses={bug.get('statuses')}")
+
+    if m["server_errors_5xx"]:
+        from collections import Counter
+        by_event = Counter(err.get("event", "?") for err in m["server_errors_5xx"])
+        print("\n  [⚠️  5xx 서버 에러 상세 — endpoint별 집계]")
+        for event, cnt in by_event.most_common():
+            print(f"    {event}: {cnt}건")
 
     print("=" * 60)
 
@@ -523,6 +541,7 @@ async def main_phase_4(waves: int, band_arg: str):
             print(f"  대기 등록 누적:     {summary['total_enqueue']}")
             print(f"  취소 누적:          {summary['total_cancel']}")
             print(f"  버그 누적:          {summary['total_bugs']}")
+            print(f"  5xx 누적:           {summary.get('total_5xx', 0)}")
             print(f"  부스 불균형 평균:   stdev_avg={summary['imbalance']['mean_stdev_avg']} / max_ever={summary['imbalance']['max_stdev_ever']}")
             print(f"  시간대별:           {summary['by_band']}")
             print("=" * 60)
