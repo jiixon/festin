@@ -12,10 +12,11 @@ from dataclasses import dataclass, field
 
 from festin_client import FestinClient
 from gemini_client import decide_enqueue, decide_during_wait, decide_after_cancel
-from config import BOOTH_IDS, BOOTH_EXPERIENCE_SEC, BOOTH_ARRIVAL_SEC
+from config import BOOTH_IDS, BOOTH_EXPERIENCE_SEC, BOOTH_ARRIVAL_SEC, WAVE_ARRIVAL_SPREAD_SEC
 
 
 @dataclass
+
 class AgentState:
     agent_id: str
     pattern: str          # explorer / waiter / leaver / retrier / staff
@@ -384,7 +385,8 @@ class Agent:
         arrival_sec = BOOTH_ARRIVAL_SEC
 
         # 빈 큐가 N회 연속이면 파동 종료로 보고 빠짐 (압축 운영 시 staff 페이싱 비효율 제거).
-        # Phase 4 lunch wave 1차에서 22분 중 ~3분이 빈 큐 sleep 으로 소비된 발견에 따른 보정.
+        # 단, visitor 도착 spread 가 진행 중인 동안은 empty_streak 카운트하지 않는다 —
+        # 늦게 enqueue 한 visitor 가 호출 없이 누락되는 결함이 evening wave 분석에서 식별됨.
         max_empty_streak = 3
         empty_streak = 0
 
@@ -398,7 +400,14 @@ class Agent:
                 "latency_ms": r.latency_ms,
             })
 
+            elapsed = time.monotonic() - self.s.start_time
+            within_arrival_window = elapsed <= WAVE_ARRIVAL_SPREAD_SEC
+
             if r.status != 200:
+                if within_arrival_window:
+                    # visitor 도착이 아직 진행 중 — 빈 큐여도 끈기 있게 폴링
+                    await asyncio.sleep(arrival_sec)
+                    continue
                 empty_streak += 1
                 if empty_streak >= max_empty_streak:
                     self.s.log("staff_exit_drained", {
@@ -411,6 +420,9 @@ class Agent:
 
             waiting_id = r.body.get("waitingId")
             if not waiting_id:
+                if within_arrival_window:
+                    await asyncio.sleep(arrival_sec)
+                    continue
                 empty_streak += 1
                 if empty_streak >= max_empty_streak:
                     self.s.log("staff_exit_drained", {
