@@ -1,4 +1,26 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: festin-mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    ports:
+      - "127.0.0.1:3306:3306"   # 로컬 덤프/복원용만, 외부 비노출
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - festin-network
+
   redis:
     image: redis:7.0-alpine
     container_name: festin-redis
@@ -39,6 +61,8 @@ services:
     image: ${DOCKER_IMAGE}
     container_name: festin-app
     depends_on:
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -64,6 +88,7 @@ services:
       - festin-network
 
 volumes:
+  mysql-data:
   redis-data:
   rabbitmq-data:
 
