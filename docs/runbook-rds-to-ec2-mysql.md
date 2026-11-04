@@ -12,6 +12,7 @@
 - 현재 RDS 접속 정보: **엔드포인트, 포트(3306), DB_NAME, DB_USER, DB_PASSWORD**
 - EC2 `~/festin/.env` 파일 (docker-compose 가 자동 로드하는 환경변수. `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` 등이 여기 있음)
 - ⚠️ `DB_USER` 가 `root` 가 아니어야 함(컨테이너 MySQL 의 `MYSQL_USER` 는 root 지정 불가). 보통 `festin` 같은 별도 유저 — 맞는지 확인.
+- ⚠️ `/etc/environment`, `~/.bashrc`, `~/.profile` 에 같은 변수가 있는지 확인. docker-compose 는 **셸 환경변수를 `.env` 보다 우선**하므로, 여기 남은 값이 `.env` 를 덮어쓴다(6단계 참고).
 
 전 과정 예상 소요: 20~30분. 실제 삭제(7단계)는 며칠 관찰 후.
 
@@ -108,6 +109,19 @@ DB_HOST=mysql
 DB_PORT=3306
 ```
 
+`.env` 만 고치면 끝나지 않는다. 셸 환경변수에 예전 값이 남아 있으면 그 값이 적용되고, CD 도 같은 값으로 앱을 띄운다. 파일 내용이 아니라 **실제 적용될 값**으로 확인한다.
+
+```bash
+grep -nE '^(export )?DB_HOST=' /etc/environment ~/.bashrc ~/.profile ~/.bash_profile 2>/dev/null   # 있으면 그 줄을 제거
+# /etc/environment 를 고쳤다면 SSH 를 끊고 다시 접속해야 적용된다
+printenv DB_HOST                                                                                   # 아무것도 나오지 않아야 함
+DOCKER_IMAGE=jiixon/festin:latest docker-compose -f docker-compose.prod.yml config 2>/dev/null | grep DB_HOST   # DB_HOST: mysql
+```
+
+> 이 확인을 빠뜨리면 전환 직후에는 문제가 드러나지 않을 수 있다. 실제로 RDS 삭제 후 첫 CD 에서 앱이 없어진 RDS 주소로 접속하려다 기동에 실패한 적이 있다(`UnknownHostException`).
+
+> `JWT_SECRET`, `FIREBASE_CREDENTIALS_JSON` 은 CD 가 주입한다. `.env` 에 이 값이 없다면 아래처럼 직접 재시작하지 말고 Actions 에서 CD 를 다시 실행한다.
+
 app 재시작:
 
 ```bash
@@ -128,7 +142,8 @@ curl -f http://localhost:8080/api/health && echo " OK"
 - **AWS 콘솔** → RDS → 인스턴스 → *Actions → Delete*
   - "최종 스냅샷 생성" 체크 (2단계에서 이미 떴어도 한 번 더 안전)
   - 자동 백업 삭제 확인
-- 삭제 후 **RDS 요금 = 0**. EC2(t3.micro)만 남음.
+- 삭제 후 **RDS 요금 = 0**. EC2(t3.micro)만 남음. 스냅샷을 남겼다면 보관 비용은 따로 나올 수 있다.
+- 삭제 전에 6단계의 "실제 적용될 값" 확인을 한 번 더 하고, 서버에 남은 덤프 파일(`/tmp/festin_dump.sql` 등)을 지운다.
 
 ---
 
@@ -136,6 +151,7 @@ curl -f http://localhost:8080/api/health && echo " OK"
 
 `~/festin/.env` 의 `DB_HOST` 를 다시 RDS 엔드포인트로 되돌리고 `docker-compose ... up -d --no-deps app`.
 RDS 를 이미 삭제했다면 2단계 최종 스냅샷에서 새 인스턴스로 복원 → `DB_HOST` 를 그 엔드포인트로.
+어느 경우든 6단계의 명령으로 실제 적용될 값을 확인한다.
 
 ---
 
