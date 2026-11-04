@@ -46,7 +46,6 @@ logs/
 
 ### docs ###
 CLAUDE.md
-docs/
 
 ### Environment Variables ###
 .env
@@ -64,8 +63,5 @@ __pycache__/
 venv/
 .venv/
 load-test/llm-simulation/src/results/
-### 개인 이력서 HTML (repo 추적 제외) ###
-/jiwon-cv.html
-/jiwon-cv2.html
-/jiwon-pv.html
-/jiwon-cv3.html
+### 개인 파일 (이력서·면접 준비·노트) — repo 추적 제외 ###
+/private/
