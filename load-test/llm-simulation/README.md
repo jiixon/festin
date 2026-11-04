@@ -105,7 +105,6 @@ load-test/llm-simulation/
 ├── architecture.md         ← 시스템 설계 및 LLM 호출 전략
 ├── api-reference.md        ← Festin API 레퍼런스
 ├── findings-template.md    ← 발견 기록 (누적)
-├── interview-story.md      ← 면접 스토리 가이드
 └── src/
     ├── runner.py            ← 메인 실행. 단계별 에이전트 구성
     ├── agent.py             ← 에이전트 행동 흐름
