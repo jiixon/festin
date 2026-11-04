@@ -1,5 +1,6 @@
 package com.festin.app.waiting.adapter.scheduler;
 
+import com.festin.app.user.application.port.out.UserRepositoryPort;
 import com.festin.app.waiting.application.port.out.QueueCachePort;
 import com.festin.app.waiting.application.port.out.WaitingRepositoryPort;
 import com.festin.app.waiting.domain.model.WaitingStatus;
@@ -37,6 +38,7 @@ public class SoftLockRecoveryBatch {
 
     private final WaitingRepositoryPort waitingRepositoryPort;
     private final QueueCachePort queueCachePort;
+    private final UserRepositoryPort userRepositoryPort;
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String SOFT_LOCK_PATTERN = "temp:calling:*";
@@ -55,6 +57,7 @@ public class SoftLockRecoveryBatch {
         try {
             int scannedCount = 0;
             int recoveredCount = 0;
+            int discardedCount = 0;
 
             // Soft Lock 스캔
             ScanOptions options = ScanOptions.scanOptions()
@@ -92,6 +95,14 @@ public class SoftLockRecoveryBatch {
                     redisTemplate.delete(softLockKey);
                     log.debug("[Soft Lock 배치] 정상 완료 확인 - userId: {}, boothId: {}", userId, boothId);
 
+                } else if (!userRepositoryPort.existsById(userId)) {
+                    // 좀비: 되살리면 호출이 다시 FK 위반으로 실패하고, 배치가 또 되살린다.
+                    // 롤백하지 않고 Soft Lock만 제거해 루프를 끊는다.
+                    redisTemplate.delete(softLockKey);
+
+                    log.warn("[Soft Lock 배치] 좀비 폐기 (롤백 안 함) - userId: {}, boothId: {}", userId, boothId);
+                    discardedCount++;
+
                 } else {
                     // MySQL 실패: Redis 롤백
                     rollbackRedis(boothId, userId, timestamp);
@@ -106,8 +117,8 @@ public class SoftLockRecoveryBatch {
             cursor.close();
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("[Soft Lock 배치] 보정 완료 - 스캔: {}, 복구: {}, 소요: {}ms",
-                    scannedCount, recoveredCount, duration);
+            log.info("[Soft Lock 배치] 보정 완료 - 스캔: {}, 복구: {}, 좀비 폐기: {}, 소요: {}ms",
+                    scannedCount, recoveredCount, discardedCount, duration);
 
         } catch (Exception e) {
             log.error("[Soft Lock 배치] 보정 실패", e);

@@ -33,6 +33,18 @@ public interface UserRepositoryPort {
     Optional<User> findByEmail(String email);
 
     /**
+     * User 존재 여부 확인
+     *
+     * 대기열(Redis)은 사용자(MySQL)와 참조 무결성이 보장되지 않으므로,
+     * 대기열에서 꺼낸 userId가 실재하는지 확인할 때 사용한다.
+     * 도메인 객체 전체를 로드하지 않는 존재 확인 전용 연산이다.
+     *
+     * @param userId 사용자 ID
+     * @return 존재하면 true
+     */
+    boolean existsById(Long userId);
+
+    /**
      * User 저장
      *
      * @param user 저장할 User
