@@ -33,6 +33,11 @@ public class JpaUserAdapter implements UserRepositoryPort {
     }
 
     @Override
+    public boolean existsById(Long userId) {
+        return userJpaRepository.existsById(userId);
+    }
+
+    @Override
     public User save(User user) {
         UserEntity entity;
 
