@@ -4,26 +4,24 @@
 
 ```
 ┌─────────────────┐
-│   Client App    │ (iOS/Android)
+│     Client      │
 └────────┬────────┘
          │ HTTP/REST
          ↓
 ┌─────────────────┐
 │  Spring Boot    │
 │   Application   │
-└────┬────────┬───┘
-     │        │
-     │        └──────────────┐
-     ↓                       ↓
-┌──────────┐          ┌──────────┐
-│  MySQL   │          │  Redis   │
-│(영구저장)│          │ (캐시/큐)│
-└──────────┘          └──────────┘
-     │
-     ↓
-┌──────────────────┐
-│  FCM (Push 알림)  │
-└──────────────────┘
+└──┬─────┬─────┬──┘
+   │     │     │ 호출 알림 발행
+   ↓     ↓     ↓
+┌─────┐┌─────┐┌──────────┐
+│MySQL││Redis││ RabbitMQ │
+└─────┘└─────┘└────┬─────┘
+                   │ 소비 (FcmNotificationConsumer)
+                   ↓
+             ┌───────────┐
+             │ FCM (푸시) │
+             └───────────┘
 ```
 
 ---
@@ -86,11 +84,16 @@ Staff → Spring Boot
   ↓
 1. Redis: 부스 정원 확인
 2. Redis: ZPOPMIN으로 대기열에서 제거
-3. MySQL: Waiting 테이블에 INSERT (영구 기록 시작)
-4. Redis: SREM으로 활성 부스 목록에서 제거
-5. FCM: 푸시 알림 발송 (비동기)
+3. MySQL: 사용자 존재 확인 (없으면 폐기하고 다음 대기자로)
+4. Redis: Soft Lock 생성
+5. Redis: SREM으로 활성 부스 목록에서 제거
+6. MySQL: Waiting 테이블에 INSERT (영구 기록 시작)
+7. Redis: Soft Lock 삭제
+8. RabbitMQ: 호출 알림 발행
   ↓
 Staff ← 200 OK (waitingId 반환)
+
+(응답과 별개로) RabbitMQ → FcmNotificationConsumer → FCM 푸시
 ```
 
 **핵심**: 이 시점부터 MySQL에 기록 시작
@@ -130,8 +133,8 @@ Staff ← 200 OK
 - **호출/입장/완료**: MySQL + Redis 트랜잭션 완료 후 응답
 
 ### 비동기 처리 (Async)
-- **FCM 푸시 알림**: 호출 시 비동기 발송
-- **알림 재시도**: 실패 시 백그라운드 재시도
+- **호출 알림**: 호출 처리 후 RabbitMQ에 발행하고, Consumer가 FCM으로 발송
+- **실패 처리**: 현재 실패한 알림은 재발송되지 않음 (자세한 내용은 아래 "외부 시스템 연동")
 
 ### 배치 처리 (Scheduled)
 - **노쇼 처리**: 주기적으로 타임아웃 체크 (1분마다)
@@ -152,7 +155,7 @@ public void callNext(BoothId boothId) {
     Waiting waiting = Waiting.createCalled(userId, boothId);
     waitingRepository.save(waiting);
 
-    // 3. 알림 발송 (비동기, 트랜잭션 외부)
+    // 3. RabbitMQ에 호출 알림 발행 (발송은 Consumer가 처리)
 }
 ```
 
@@ -163,16 +166,29 @@ public void callNext(BoothId boothId) {
 
 ## 🌐 외부 시스템 연동
 
+### RabbitMQ
+**역할**: 호출 처리와 푸시 발송 분리
+
+**구성**:
+- 큐: `booth-call-notifications` (durable)
+- 발행: `RabbitMqNotificationAdapter`
+- 소비: `FcmNotificationConsumer` (수동 ACK, 이벤트 ID로 중복 처리 방지)
+- 위치: Docker Compose의 `rabbitmq` 서비스
+
+**특징**:
+- 발행 실패는 로그만 남기고 호출 응답은 정상 반환 (재발행 없음)
+
 ### FCM (Firebase Cloud Messaging)
 **역할**: 푸시 알림 발송
 
 **타이밍**:
-- **호출 시**: "순번이 되었습니다" 알림
+- **호출 시**: 부스 입장 순서 알림
 - **노쇼 처리 시**: (향후) "노쇼 처리되었습니다" 알림
 
 **특징**:
-- 비동기 발송 (@Async)
-- 실패 시 최대 3회 재시도
+- RabbitMQ Consumer가 발송
+- FCM 오류는 재시도하지 않고 ACK (유효하지 않은 토큰은 캐시에서 삭제)
+- 그 외 처리 오류는 NACK으로 큐에 되돌리지만, 이벤트 ID가 `PROCESSING`으로 남아 있어 재전달 시 중복으로 판단하고 ACK함 (현재 재발송되지 않음)
 - 알림 실패해도 대기 흐름은 정상 진행
 
 ---
@@ -206,9 +222,13 @@ public void callNext(BoothId boothId) {
 
 ### FCM 장애
 - **대기 흐름은 정상**: 알림만 실패
-- **재시도 로직**: 3회 재시도 후 포기, 별도 보정 작업 가능
+- **재시도 없음**: FCM 오류가 난 메시지는 ACK 처리되어 다시 발송되지 않음
+
+### RabbitMQ 장애
+- **호출은 정상**: 발행 실패는 로그만 남김
+- **해당 알림은 유실**: 재발행 로직이 없음
 
 ---
 
-**Last Updated**: 2025-12-17
+**Last Updated**: 2026-11-05
 **Version**: 1.0
