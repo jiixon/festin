@@ -56,8 +56,9 @@ class FestinClient:
                 latency = int((time.monotonic() - start) * 1000)
                 body = await self._parse_body(r)
                 return ApiResponse(status=r.status, body=body, latency_ms=latency)
-        except asyncio.TimeoutError:
-            return ApiResponse(status=0, body={"error": "timeout"}, latency_ms=int((time.monotonic() - start) * 1000))
+        except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+            kind = "timeout" if isinstance(e, asyncio.TimeoutError) else "conn_error"
+            return ApiResponse(status=0, body={"error": kind, "detail": str(e)}, latency_ms=int((time.monotonic() - start) * 1000))
 
     async def _post(self, path: str, payload: dict, token: str | None) -> ApiResponse:
         headers = {"Content-Type": "application/json"}
@@ -70,8 +71,9 @@ class FestinClient:
                 latency = int((time.monotonic() - start) * 1000)
                 body = await self._parse_body(r)
                 return ApiResponse(status=r.status, body=body, latency_ms=latency)
-        except asyncio.TimeoutError:
-            return ApiResponse(status=0, body={"error": "timeout"}, latency_ms=int((time.monotonic() - start) * 1000))
+        except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+            kind = "timeout" if isinstance(e, asyncio.TimeoutError) else "conn_error"
+            return ApiResponse(status=0, body={"error": kind, "detail": str(e)}, latency_ms=int((time.monotonic() - start) * 1000))
 
     async def _delete(self, path: str, token: str) -> ApiResponse:
         headers = {"Authorization": f"Bearer {token}"}
@@ -82,8 +84,9 @@ class FestinClient:
                 latency = int((time.monotonic() - start) * 1000)
                 body = await self._parse_body(r)
                 return ApiResponse(status=r.status, body=body, latency_ms=latency)
-        except asyncio.TimeoutError:
-            return ApiResponse(status=0, body={"error": "timeout"}, latency_ms=int((time.monotonic() - start) * 1000))
+        except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+            kind = "timeout" if isinstance(e, asyncio.TimeoutError) else "conn_error"
+            return ApiResponse(status=0, body={"error": kind, "detail": str(e)}, latency_ms=int((time.monotonic() - start) * 1000))
 
     async def _parse_body(self, response: aiohttp.ClientResponse) -> dict:
         try:

@@ -75,6 +75,11 @@ jobs:
             --waves ${{ steps.band.outputs.waves }} \
             --band ${{ steps.band.outputs.band }}
 
+      - name: Wave 요약 + 이상치 감지
+        if: always()
+        working-directory: load-test/llm-simulation/src
+        run: python wave_report.py
+
       - name: 결과 artifact 업로드
         if: always()
         uses: actions/upload-artifact@v4

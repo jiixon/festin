@@ -3,7 +3,10 @@ jwt:
 
 spring:
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=utf8
+    # allowPublicKeyRetrieval: MySQL 8.0 기본 인증(caching_sha2_password) + useSSL=false 조합에서
+    #   드라이버가 서버 공개키를 못 받아 "Public Key Retrieval is not allowed" 로 연결 거부되는 것을 허용.
+    #   DB 는 동일 호스트의 docker 내부 네트워크(festin-network)에만 노출되므로 평문 키 교환 위험은 없음.
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -46,7 +46,6 @@ logs/
 
 ### docs ###
 CLAUDE.md
-docs/
 
 ### Environment Variables ###
 .env

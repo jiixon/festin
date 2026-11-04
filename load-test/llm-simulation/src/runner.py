@@ -258,10 +258,16 @@ async def run_wave(client: FestinClient, band: str, wave_id: int) -> dict | None
         await agent.run()
 
     sim_start = time.monotonic()
-    await asyncio.gather(
+    # 에이전트별 결함 격리: 한 명의 커넥션 리셋/예외가 wave 전체를 죽이지 않도록
+    # return_exceptions=True 로 개별 예외를 수집하고, 나머지 에이전트는 완주시킨다.
+    outcomes = await asyncio.gather(
         *(with_delay(a, d) for a, d in zip(visitors, delays)),
         *(s.run() for s in staff_agents),
+        return_exceptions=True,
     )
+    for exc in outcomes:
+        if isinstance(exc, Exception):
+            print(f"  [wave #{wave_id}] ⚠️  에이전트 예외 격리됨: {type(exc).__name__}: {exc}")
     elapsed = time.monotonic() - sim_start
 
     # 4. 모니터 종료
@@ -498,7 +504,10 @@ async def main_phase_123(phase: int):
         print(f"\n[Run] {len(agents)}명 동시 실행 시작\n")
         sim_start = time.monotonic()
 
-        await asyncio.gather(*[a.run() for a in agents])
+        outcomes = await asyncio.gather(*[a.run() for a in agents], return_exceptions=True)
+        for exc in outcomes:
+            if isinstance(exc, Exception):
+                print(f"  ⚠️  에이전트 예외 격리됨: {type(exc).__name__}: {exc}")
 
         print(f"\n[Done] 완료 ({time.monotonic() - sim_start:.1f}초)\n")
 

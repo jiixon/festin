@@ -90,11 +90,11 @@ jobs:
             # 최신 이미지 pull
             docker pull $DOCKER_IMAGE
 
-            # Redis/RabbitMQ 먼저 실행 (이미 실행 중이면 스킵)
-            docker-compose -f docker-compose.prod.yml up -d redis rabbitmq
+            # MySQL/Redis/RabbitMQ 먼저 실행 (이미 실행 중이면 스킵)
+            docker-compose -f docker-compose.prod.yml up -d mysql redis rabbitmq
 
-            # Redis/RabbitMQ 헬스체크 대기
-            echo "⏳ Waiting for Redis and RabbitMQ to be healthy..."
+            # MySQL/Redis/RabbitMQ 헬스체크 대기
+            echo "⏳ Waiting for MySQL, Redis and RabbitMQ to be healthy..."
             sleep 5
 
             # 기존 app 컨테이너만 정리 (Redis/RabbitMQ는 유지)
