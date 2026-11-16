@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  * 장점:
  * - 자연스러운 흐름 (Redis → MySQL)
  * - Soft Lock으로 실패 지점 마킹
- * - 배치가 Soft Lock만 스캔 (O(실패 건수))
+ * - 배치는 실패해 남은 Soft Lock만 복구 대상으로 삼음
  */
 @Slf4j
 @Service

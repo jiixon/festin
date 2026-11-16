@@ -23,12 +23,12 @@ import java.util.Set;
  * - Redis에는 여전히 대기열에 존재
  *
  * 해결:
- * - 최근 5분 CALLED 상태 조회 (MySQL Full Scan)
+ * - 최근 5분 CALLED 상태 조회
  * - 각 userId가 Redis에도 있는지 확인
  * - 있으면 Redis에서 제거
  *
  * ⚠️ 비효율:
- * - MySQL에서 CALLED 상태 전체 조회 (Full Scan)
+ * - 정상 처리된 건까지 최근 CALLED 이력을 모두 조회
  * - 각 항목마다 Redis 조회 필요
  * - O(N) where N = 최근 CALLED 수
  */
