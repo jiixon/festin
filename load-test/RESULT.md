@@ -131,4 +131,6 @@ Prometheus 의 `hikaricp_connections_pending` 급증을 추적한 결과, Redis 
 | 에러율 | 0% | 0% | 유지 |
 | 최대 VUser | 1,000 | 500 | — |
 
+최대 VUser는 조건이 아니라 결과값이다. 같은 요청량(초당 500건)을 맞추려고 k6가 늘린 VUser 수라, 응답이 느렸던 최적화 전에 더 많이 필요했다.
+
 추가 인프라 비용 $0 (t3.micro 그대로). 상세: [`load-test-report.md`](load-test-report.md)
