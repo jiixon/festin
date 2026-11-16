@@ -20,7 +20,7 @@ import java.util.Map;
  * Soft Lock 방식의 배치 보정
  *
  * 장점:
- * - Soft Lock만 스캔 (O(실패 건수))
+ * - 실패해 남은 Soft Lock만 복구 대상 (SCAN 자체는 전체 키를 순회)
  * - MySQL 조회 최소화
  * - 원래 timestamp 보존 (정확한 순서 복구)
  *

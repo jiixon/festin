@@ -59,7 +59,7 @@ TransactionalEventListener와 Soft Lock 두 가지 접근법을 정량적으로 
 ### 테스트 환경
 - **테스트 도구:** Port 레벨 Failure Injection (Mockito.spy() + Real MySQL/Redis)
 - **Infrastructure:** TestContainers (MySQL 8.0, Redis 7.2)
-- **테스트 파일:** `RecoveryApproachComparisonTest.java`
+- **테스트 파일:** `RecoveryApproachComparisonTest.java` (현재 파일 전체가 주석 처리되어 CI에서 실행되지 않음)
 
 ---
 
@@ -99,7 +99,7 @@ TransactionalEventListener와 Soft Lock 두 가지 접근법을 정량적으로 
 
 | 방식 | 스캔 대상 | 스캔 건수 | 소요 시간 | 시간 복잡도 |
 |------|-----------|-----------|-----------|-------------|
-| **Soft Lock** | Redis SCAN `temp:calling:*` | 1건 (실패만) | **5ms** | O(실패 건수) |
+| **Soft Lock** | Redis SCAN `temp:calling:*` | 1건 (실패만) | **5ms** | 복구 대상은 실패 건만 (SCAN 자체는 전체 키 순회) |
 | **EventListener** | MySQL `SELECT WHERE status=CALLED AND calledAt > now-5min` | 100건 (전체) | **64ms** | O(최근 CALLED 수) |
 
 **쿼리 비교:**
@@ -117,7 +117,7 @@ SELECT EXISTS(SELECT 1 FROM waiting WHERE user_id=? AND booth_id=? AND status='C
 
 **EventListener:**
 ```sql
--- MySQL Full Scan
+-- 최근 CALLED 이력 조회
 SELECT * FROM waiting
 WHERE status = 'CALLED'
   AND called_at > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
@@ -128,10 +128,10 @@ ZSCORE queue:booth:{boothId} {userId}
 ```
 
 **분석:**
-- **Soft Lock**: 실패 건수만큼만 스캔 (정상 케이스 0건)
+- **Soft Lock**: 실패해 남은 Soft Lock만 복구 대상 (정상 케이스 0건)
 - **EventListener**: 최근 CALLED 전체 조회 후 Redis 대조
 
-**승자: Soft Lock** (12.8배 빠름, O(실패 건수) vs O(전체))
+**승자: Soft Lock** (이 조건에서 64ms → 5ms. 처리 건수가 100건과 1건으로 달라, 방식 차이만의 수치는 아니다)
 
 ---
 
@@ -211,7 +211,7 @@ ZSCORE queue:booth:{boothId} {userId}
 | 평가 항목 | TransactionalEventListener | Soft Lock | 승자 |
 |-----------|---------------------------|-----------|------|
 | **복구 정확성** | Peek이라 복구 불필요<br/>(but Race Condition 가능) | timestamp 보존 → 정확한 위치 복구 | **Soft Lock** |
-| **배치 스캔 효율** | O(최근 CALLED 수)<br/>64ms (100건) | O(실패 건수)<br/>5ms (1건) | **Soft Lock** |
+| **배치 스캔 효율** | O(최근 CALLED 수)<br/>64ms (100건) | 복구 대상 실패 건만<br/>5ms (1건) | **Soft Lock** |
 | **복구 시간** | ~1분 64ms<br/>MySQL 조회 필요 | ~1분 25ms<br/>즉시 감지 | **Soft Lock** |
 | **LOC** | ~286 lines | ~300 lines | **비슷함** |
 | **사이클로매틱 복잡도** | 이벤트 흐름 복잡 | 선형적 흐름 | **Soft Lock** |
@@ -324,16 +324,16 @@ temp:calling:123:456
 ### 3. 배치 효율성
 
 ```java
-// Soft Lock 방식: O(실패 건수)
+// Soft Lock 방식: 복구 대상은 실패 건만 (SCAN 자체는 전체 키 순회)
 SCAN 0 MATCH temp:calling:* COUNT 100
-→ 실패 건수만큼만 스캔 (정상 케이스: 0건)
+→ 실패해 남은 Soft Lock만 복구 (정상 케이스: 0건)
 
 // EventListener 방식: O(최근 CALLED 수)
 SELECT * FROM waiting WHERE status='CALLED' AND calledAt > now-5min
 → 최근 5분 전체 CALLED 조회 (정상 케이스도 조회)
 ```
 
-**측정 결과: 12.8배 차이 (5ms vs 64ms)**
+**측정 결과: 5ms vs 64ms** (복구 대상 1건 vs 최근 호출 이력 100건 조건)
 
 ---
 
@@ -369,7 +369,7 @@ Peek만 했으므로 Redis 변경 없음
 ### Soft Lock 방식 채택 이유
 
 1. **복구 정확성**: timestamp 보존으로 정확한 순서 복구
-2. **배치 효율성**: 12.8배 빠른 스캔 (5ms vs 64ms)
+2. **배치 효율성**: 복구 대상이 실패 건으로 한정됨 (측정: 5ms vs 64ms, 1건 vs 100건 조건)
 3. **아키텍처 일관성**: Redis → MySQL 흐름 유지 (Source of Truth)
 4. **명시적 마킹**: 실패 지점 명확히 표시
 5. **디버깅 용이**: Soft Lock 키로 즉시 문제 파악

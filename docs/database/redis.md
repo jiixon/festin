@@ -216,7 +216,7 @@ HGETALL temp:calling:1:123
      - 존재: Soft Lock만 삭제 (정상 완료)
      - 없음: Redis 롤백 (ZADD + SADD, timestamp로 정확한 위치 복구) + Soft Lock 삭제
   ```
-- **효율성**: O(실패 건수) - 정상 케이스 0건 스캔
+- **효율성**: 실패해 남은 Soft Lock만 복구 대상 - 정상 케이스 0건 (SCAN 자체는 전체 키를 순회)
 
 **장점**:
 - **timestamp 보존**: 원래 등록 시각으로 정확한 순서 복구

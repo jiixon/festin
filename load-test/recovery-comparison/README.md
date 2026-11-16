@@ -43,7 +43,7 @@ TransactionalEventListener vs Soft Lock 두 가지 접근법을 **정량적으�
 **장점:**
 - 자연스러운 흐름 (Redis → MySQL)
 - timestamp 보존으로 정확한 복구
-- 배치 효율성: O(실패 건수)
+- 배치 효율성: 실패해 남은 Soft Lock만 복구 대상
 
 **최종 적용:** `CallNextService.java`에 통합됨
 
@@ -75,7 +75,7 @@ V2 방식에서만 사용.
 
 | 평가 항목 | TransactionalEventListener | Soft Lock | 승자 |
 |-----------|---------------------------|-----------|------|
-| **배치 스캔 효율** | 64ms (100건 조회) | 5ms (1건만) | **Soft Lock** (12.8배 빠름) |
+| **배치 스캔 효율** | 64ms (100건 조회) | 5ms (1건만) | **Soft Lock** (처리 건수가 달라 방식 차이만의 수치는 아님) |
 | **복구 정확성** | Peek이라 복구 불필요 | timestamp 보존 | **Soft Lock** |
 | **아키텍처 단순성** | 역할 전도, Peek gap | 자연스러운 흐름 | **Soft Lock** |
 
@@ -86,7 +86,7 @@ V2 방식에서만 사용.
 **Soft Lock 방식 채택**
 
 이유:
-1. 배치 효율성: 12.8배 빠름 (5ms vs 64ms)
+1. 배치 효율성: 복구 대상이 실패 건으로 한정 (측정: 5ms vs 64ms, 1건 vs 100건 조건)
 2. 복구 정확성: timestamp 보존으로 정확한 위치 복구
 3. 아키텍처 일관성: Redis → MySQL 흐름 유지
 4. 명시적 마킹: Soft Lock으로 실패 지점 명확히 표시
